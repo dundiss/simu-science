@@ -67,10 +67,11 @@
 
 body {
     margin: 0;
-    overflow: hidden;
+    /* overflow: hidden; */
     background-color: #000;
     font-family: Arial, sans-serif;
     color: white;
+    overflow-y: auto;
 }
 
 /* Conteneur principal pour la disposition 1/3 - 2/3 */
