@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimuScience - Mes Simulateurs Interactifs</title>
+    <link rel="stylesheet" href="home-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <div class="nebula-bg"></div>
+    <div class="stars-container"></div>
+
+    <div class="home-container">
+        <header class="home-header">
+            <img src="public/images/logo-simuscience.png" alt="Logo SimuScience" class="logo">
+            <p class="tagline">Explorez les merveilles de la science et de la physique à travers des expériences
+                virtuelles.</p>
+        </header>
+
+        <main class="simulator-grid">
+            <a href="simulateur-systeme-solaire/index.html" class="simulator-card">
+                <div class="card-icon"><i class="fas fa-globe-americas"></i></div>
+                <h2 class="card-title">Simulateur Système Solaire</h2>
+                <p class="card-description">Plongez dans l'espace et observez les planètes, lunes et satellites
+                    artificiels dans un modèle dynamique.</p>
+                <span class="card-status active">Actif</span>
+            </a>
+
+            <!-- <div class="simulator-card disabled">
+                                        <div class="card-icon"><i class="fas fa-bullseye"></i></div>
+                                        <h2 class="card-title">Simulateur de Lancement de Projectile</h2>
+                                        <p class="card-description">Découvrez la balistique et la trajectoire des objets lancés avec ce
+                                            simulateur interactif.</p>
+                                        <span class="card-status coming-soon">Bientôt Disponible</span>
+                                    </div> -->
+            <a href="simulateur-projectile/index.html" class="simulator-card">
+                <div class="card-icon"><i class="fas fa-bullseye"></i></div>
+                <h2 class="card-title">Simulateur de Lancement de Projectile</h2>
+                <p class="card-description">Découvrez la balistique et la trajectoire des objets lancés avec ce
+                    simulateur interactif.</p>
+                <span class="card-status active">Actif</span>
+            </a>
+            
+            <a href="simulateur-inertie/index.html" class="simulator-card">
+                <div class="card-icon"><i class="fas fa-balance-scale"></i></div>
+                <h2 class="card-title">Simulateur Barre et Ballon</h2>
+                <p class="card-description">Maîtrisez l'équilibre et les principes du contrôle dans cette simulation de
+                    barre et ballon.</p>
+                <span class="card-status active">Actif</span>
+            </a>
+        </main>
+
+        <footer class="home-footer">
+            <p>&copy; 2025 SimuScience. Tous droits réservés.</p>
+            <p>Développé avec passion pour l'apprentissage.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const starsContainer = document.querySelector('.stars-container');
+            const numStars = 500;
+
+            for (let i = 0; i < numStars; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.width = `${Math.random() * 2 + 1}px`;
+                star.style.height = star.style.width;
+                star.style.opacity = Math.random();
+                star.style.animationDelay = `${Math.random() * 10}s`;
+                star.style.animationDuration = `${Math.random() * 5 + 5}s`;
+                starsContainer.appendChild(star);
+            }
+        });
+    </script>
+</body>
+
+</html>

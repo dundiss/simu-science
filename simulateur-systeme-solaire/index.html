@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système Solaire Dynamique</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="main-container">
+        <div class="controls-container">
+            <a href="../home.html" class="home-button">← Retour à l'accueil</a>
+
+            <label for="track-planet">Suivre une planète :</label>
+            <select id="track-planet">
+                <option value="none">Ne rien suivre</option>
+                <option value="mercury">Mercure</option>
+                <option value="venus">Vénus</option>
+                <option value="earth">Terre</option>
+                <option value="mars">Mars</option>
+                <option value="jupiter">Jupiter</option>
+                <option value="saturn">Saturne</option>
+            </select>
+
+            <button id="toggle-pause">Pause / Reprendre</button>
+            <button id="toggle-reverse">Inverser le temps</button>
+            <button id="toggle-description">Afficher la description</button>
+
+            <div id="description-area" class="hidden">
+                <p>Cette simulation représente le système solaire interne, incluant Mercure, Vénus, la Terre et Mars.
+                    Observez-les orbiter autour du Soleil. La Terre est accompagnée de sa Lune (satellite naturel) et de
+                    deux satellites artificiels. Vous pouvez mettre en pause, inverser le temps et suivre chaque
+                    planète. Explorez également Jupiter et Saturne, les géantes gazeuses du système solaire externe.
+                    Nous avons par exemple Ganymède (la plus grande lune de Jupiter) ou Titan (la plus grande lune de
+                    Saturne).</p>
+                <p>La puissance du Soleil est immense, atteignant des températures de 1,5 x 10<sup>7</sup> K en son
+                    cœur. L'eau sur Terre, essentielle à la vie, a la formule chimique H<sub>2</sub>O. Ces notations
+                    rendent la lecture des informations scientifiques plus précise.</p>
+            </div>
+        </div>
+
+        <div class="solar-system-container">
+            <div class="nebula-bg"></div>
+            <div class="stars-container"></div>
+            <div class="sun"></div>
+
+            <div class="orbit mercury-orbit">
+                <div class="planet mercury"></div>
+            </div>
+
+            <div class="orbit venus-orbit">
+                <div class="planet venus"></div>
+            </div>
+
+            <div class="orbit earth-orbit">
+                <div class="planet earth">
+                    <div class="orbit moon-orbit">
+                        <div class="moon"></div>
+                    </div>
+                    <div class="orbit satellite-1-orbit">
+                        <div class="satellite satellite-1"></div>
+                    </div>
+                    <div class="orbit satellite-2-orbit">
+                        <div class="satellite satellite-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="orbit mars-orbit">
+                <div class="planet mars"></div>
+            </div>
+
+            <div class="orbit jupiter-orbit">
+                <div class="planet jupiter">
+                    <div class="orbit ganymede-orbit">
+                        <div class="moon ganymede"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="orbit saturn-orbit">
+                <div class="planet saturn">
+                    <div class="rings"></div>
+                    <div class="orbit titan-orbit">
+                        <div class="moon titan"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="laser-container">
+            <div id="laser-earth-to-planet" class="laser"></div>
+            <div id="laser-satellite-to-planet" class="laser"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

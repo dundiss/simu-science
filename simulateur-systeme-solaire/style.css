@@ -1,0 +1,591 @@
+:root {
+    /* Variables globales pour les planètes et leurs orbites */
+    --sun-size: 80px;
+
+    /* Mercure */
+    --mercury-orbit-radius: 80px;
+    --mercury-size: 10px;
+    --mercury-orbit-duration: 8s;
+
+    /* Vénus */
+    --venus-orbit-radius: 120px;
+    --venus-size: 15px;
+    --venus-orbit-duration: 12s;
+
+    /* Terre */
+    --earth-orbit-radius: 180px;
+    --earth-size: 18px;
+    --earth-orbit-duration: 20s;
+
+    /* Lune de la Terre (satellite naturel) */
+    --moon-orbit-radius: 25px;
+    --moon-size: 6px;
+    --moon-orbit-duration: 3s;
+
+    /* Satellites artificiels de la Terre */
+    --satellite-1-orbit-radius: 15px;
+    --satellite-1-size: 3px;
+    --satellite-1-orbit-duration: 1.5s;
+
+    --satellite-2-orbit-radius: 20px;
+    --satellite-2-size: 4px;
+    --satellite-2-orbit-duration: 2s;
+
+    /* Mars */
+    --mars-orbit-radius: 240px;
+    --mars-size: 12px;
+    --mars-orbit-duration: 30s;
+
+    /* Jupiter */
+    --jupiter-orbit-radius: 350px;
+    --jupiter-size: 40px;
+    --jupiter-orbit-duration: 40s;
+    --ganymede-orbit-radius: 40px;
+    --ganymede-size: 8px;
+    --ganymede-orbit-duration: 4s;
+
+    /* Saturne */
+    --saturn-orbit-radius: 500px;
+    --saturn-size: 35px;
+    --saturn-orbit-duration: 60s;
+    --titan-orbit-radius: 45px;
+    --titan-size: 9px;
+    --titan-orbit-duration: 5s;
+    --saturn-ring-width: 80px;
+    --saturn-ring-height: 5px;
+
+
+    /* Vitesse d'orbite par défaut (contrôlé par JS) */
+    --animation-direction: normal;
+    --animation-play-state: running;
+
+    /* Couleurs pour la nébuleuse */
+    --nebula-color-1: rgba(50, 20, 80, 0.4);
+    --nebula-color-2: rgba(20, 50, 90, 0.3);
+    --nebula-color-3: rgba(90, 50, 80, 0.25);
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #000;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+/* Conteneur principal pour la disposition 1/3 - 2/3 */
+.main-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    /* Rendre le conteneur scrollable en cas de contenu excessif sur petits écrans */
+    overflow: auto;
+    /* Permet le défilement si le contenu dépasse */
+}
+
+/* Colonne de gauche : Contrôles */
+.controls-container {
+    flex: 1;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    box-sizing: border-box;
+}
+
+.controls-container label,
+.controls-container select,
+.controls-container button {
+    width: 100%;
+    padding: 8px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    font-size: 1em;
+    /* Taille de police par défaut */
+}
+
+.controls-container select,
+.controls-container button {
+    background-color: #333;
+    color: white;
+    border: 1px solid #555;
+}
+
+.controls-container button:hover {
+    background-color: #555;
+}
+
+#description-area {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: rgba(50, 50, 50, 0.5);
+    border-radius: 8px;
+    font-size: 0.9em;
+    line-height: 1.4;
+    max-width: 250px;
+}
+
+#description-area.hidden {
+    display: none;
+}
+
+/* Colonne de droite : Système Solaire */
+.solar-system-container {
+    flex: 4;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: black;
+    overflow: hidden;
+}
+
+.nebula-bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    filter: blur(25px);
+    opacity: 0.8;
+    background: radial-gradient(circle at 30% 40%, var(--nebula-color-1) 0%, transparent 50%),
+        radial-gradient(circle at 70% 50%, var(--nebula-color-2) 0%, transparent 60%),
+        radial-gradient(circle at 50% 70%, var(--nebula-color-3) 0%, transparent 70%);
+}
+
+.stars-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.star {
+    position: absolute;
+    background-color: white;
+    border-radius: 50%;
+    width: 2px;
+    height: 2px;
+    opacity: 0;
+    animation: twinkle 2s infinite alternate ease-in-out;
+}
+
+@keyframes twinkle {
+    0% {
+        opacity: 0.2;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.2;
+    }
+}
+
+.sun {
+    width: var(--sun-size);
+    height: var(--sun-size);
+    background: radial-gradient(circle at 50% 50%, #FFD700, #FFA500, #FF4500);
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 0 50px 20px rgba(255, 165, 0, 0.7);
+    z-index: 10;
+}
+
+.orbit {
+    position: absolute;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation-name: orbit;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: var(--animation-direction);
+    animation-play-state: var(--animation-play-state);
+}
+
+.mercury-orbit {
+    width: calc(var(--mercury-orbit-radius) * 2);
+    height: calc(var(--mercury-orbit-radius) * 2);
+    animation-duration: var(--mercury-orbit-duration);
+}
+
+.venus-orbit {
+    width: calc(var(--venus-orbit-radius) * 2);
+    height: calc(var(--venus-orbit-radius) * 2);
+    animation-duration: var(--venus-orbit-duration);
+}
+
+.earth-orbit {
+    width: calc(var(--earth-orbit-radius) * 2);
+    height: calc(var(--earth-orbit-radius) * 2);
+    animation-duration: var(--earth-orbit-duration);
+}
+
+.mars-orbit {
+    width: calc(var(--mars-orbit-radius) * 2);
+    height: calc(var(--mars-orbit-radius) * 2);
+    animation-duration: var(--mars-orbit-duration);
+}
+
+.jupiter-orbit {
+    width: calc(var(--jupiter-orbit-radius) * 2);
+    height: calc(var(--jupiter-orbit-radius) * 2);
+    animation-duration: var(--jupiter-orbit-duration);
+}
+
+.saturn-orbit {
+    width: calc(var(--saturn-orbit-radius) * 2);
+    height: calc(var(--saturn-orbit-radius) * 2);
+    animation-duration: var(--saturn-orbit-duration);
+}
+
+.planet {
+    position: absolute;
+    border-radius: 50%;
+    z-index: 5;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.mercury {
+    width: var(--mercury-size);
+    height: var(--mercury-size);
+    background-color: #A9A9A9;
+}
+
+.venus {
+    width: var(--venus-size);
+    height: var(--venus-size);
+    background-color: #FFD700;
+}
+
+.earth {
+    width: var(--earth-size);
+    height: var(--earth-size);
+    background-color: #0000FF;
+    position: relative;
+}
+
+.mars {
+    width: var(--mars-size);
+    height: var(--mars-size);
+    background-color: #B22222;
+}
+
+.jupiter {
+    width: var(--jupiter-size);
+    height: var(--jupiter-size);
+    background: radial-gradient(circle at 30% 30%, #FFD700, #CD853F);
+    position: relative;
+}
+
+.saturn {
+    width: var(--saturn-size);
+    height: var(--saturn-size);
+    background: radial-gradient(circle at 70% 70%, #DAA520, #B8860B);
+    position: relative;
+}
+
+.rings {
+    position: absolute;
+    width: var(--saturn-ring-width);
+    height: var(--saturn-ring-height);
+    background-color: rgba(200, 200, 200, 0.7);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotateX(75deg);
+    z-index: -1;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* --- Satellites (Lune et Artificiels) --- */
+/* Style de base pour les lunes et satellites artificiels */
+.moon,
+.satellite {
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Orbite de la Lune (satellite naturel) */
+.moon-orbit {
+    position: absolute;
+    width: calc(var(--moon-orbit-radius) * 2);
+    height: calc(var(--moon-orbit-radius) * 2);
+    border: 1px dashed rgba(150, 150, 150, 0.3);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: orbit var(--moon-orbit-duration) linear infinite var(--animation-direction) var(--animation-play-state);
+}
+
+/* La Lune */
+.moon {
+    width: var(--moon-size);
+    height: var(--moon-size);
+    background-color: #D3D3D3;
+}
+
+/* Orbite du Satellite Artificiel 1 */
+.satellite-1-orbit {
+    position: absolute;
+    width: calc(var(--satellite-1-orbit-radius) * 2);
+    height: calc(var(--satellite-1-orbit-radius) * 2);
+    border: 1px dashed rgba(100, 255, 100, 0.3);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: orbit var(--satellite-1-orbit-duration) linear infinite var(--animation-direction) var(--animation-play-state);
+}
+
+/* Satellite Artificiel 1 */
+.satellite-1 {
+    width: var(--satellite-1-size);
+    height: var(--satellite-1-size);
+    background-color: #FF6347;
+}
+
+/* Orbite du Satellite Artificiel 2 */
+.satellite-2-orbit {
+    position: absolute;
+    width: calc(var(--satellite-2-orbit-radius) * 2);
+    height: calc(var(--satellite-2-orbit-radius) * 2);
+    border: 1px dashed rgba(100, 100, 255, 0.3);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: orbit var(--satellite-2-orbit-duration) linear infinite var(--animation-direction) var(--animation-play-state) reverse;
+}
+
+/* Satellite Artificiel 2 */
+.satellite-2 {
+    width: var(--satellite-2-size);
+    height: var(--satellite-2-size);
+    background-color: #8A2BE2;
+}
+
+
+/* Orbite de Ganymède (lune de Jupiter) */
+.ganymede-orbit {
+    position: absolute;
+    width: calc(var(--ganymede-orbit-radius) * 2);
+    height: calc(var(--ganymede-orbit-radius) * 2);
+    border: 1px dashed rgba(150, 150, 150, 0.3);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: orbit var(--ganymede-orbit-duration) linear infinite var(--animation-direction) var(--animation-play-state);
+}
+
+/* Ganymède */
+.ganymede {
+    width: var(--ganymede-size);
+    height: var(--ganymede-size);
+    background-color: #B0C4DE;
+}
+
+/* Orbite de Titan (lune de Saturne) */
+.titan-orbit {
+    position: absolute;
+    width: calc(var(--titan-orbit-radius) * 2);
+    height: calc(var(--titan-orbit-radius) * 2);
+    border: 1px dashed rgba(150, 150, 150, 0.3);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: orbit var(--titan-orbit-duration) linear infinite var(--animation-direction) var(--animation-play-state);
+}
+
+/* Titan */
+.titan {
+    width: var(--titan-size);
+    height: var(--titan-size);
+    background-color: #D2B48C;
+}
+
+
+/* Animation principale d'orbite */
+@keyframes orbit {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+/* Conteneur des lasers */
+.laser-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 20;
+}
+
+/* Style de base des lasers */
+.laser {
+    position: absolute;
+    height: 2px;
+    transform-origin: 0 50%;
+    display: none;
+}
+
+/* Couleurs spécifiques pour les lasers */
+#laser-earth-to-planet {
+    background-color: limegreen;
+}
+
+#laser-satellite-to-planet {
+    background-color: cyan;
+}
+/* Ajoutez ce bloc à la fin de votre fichier style.css */
+
+/* Style pour le bouton de retour à l'accueil */
+.home-button {
+    display: block;
+    /* Le rendra comme un bloc pour prendre toute la largeur */
+    margin-bottom: 15px;
+    /* Espacement avec le reste des contrôles */
+    padding: 8px;
+    background-color: #007bff;
+    /* Un joli bleu pour le distinguer */
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    /* Supprime le soulignement par défaut */
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    /* Transition douce au survol */
+    font-size: 0.95em;
+    border: 1px solid #0056b3;
+    /* Bordure pour le relief */
+    box-sizing: border-box;
+    /* Inclut padding et bordure dans la largeur */
+}
+
+.home-button:hover {
+    background-color: #0056b3;
+    /* Bleu plus foncé au survol */
+    cursor: pointer;
+}
+
+/* MEDIA QUERIES pour les écrans plus petits */
+@media (max-width: 768px) {
+    .main-container {
+        flex-direction: column;
+        /* Empile les éléments : contrôles en haut, système solaire en bas */
+        height: auto;
+        /* La hauteur peut s'ajuster */
+    }
+
+    .controls-container {
+        width: 100%;
+        /* Prend toute la largeur */
+        border-right: none;
+        /* Pas de bordure droite */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        /* Bordure en bas */
+        flex: none;
+        /* Ne prend plus de proportion fixe */
+        padding: 15px;
+        /* Réduit le padding */
+    }
+
+    .controls-container label,
+    .controls-container select,
+    .controls-container button {
+        font-size: 0.9em;
+        /* Réduit la taille de police */
+        padding: 6px;
+        /* Réduit le padding */
+    }
+
+    #description-area {
+        max-width: 100%;
+        /* S'étend sur toute la largeur */
+        margin-top: 10px;
+        padding: 10px;
+        font-size: 0.8em;
+    }
+
+    .solar-system-container {
+        flex: none;
+        /* Ne prend plus de proportion fixe */
+        width: 100%;
+        /* Prend toute la largeur */
+        height: 70vh;
+        /* Définit une hauteur fixe pour la simulation sur les petits écrans */
+        min-height: 400px;
+        /* Hauteur minimale pour éviter qu'il ne soit trop petit */
+    }
+
+    /* Ajustement des tailles et rayons des planètes et orbites pour les petits écrans */
+    :root {
+        --sun-size: 60px;
+        /* Soleil plus petit */
+
+        --mercury-orbit-radius: 60px;
+        --mercury-size: 8px;
+
+        --venus-orbit-radius: 90px;
+        --venus-size: 12px;
+
+        --earth-orbit-radius: 130px;
+        --earth-size: 15px;
+
+        --moon-orbit-radius: 20px;
+        --moon-size: 5px;
+
+        --satellite-1-orbit-radius: 12px;
+        --satellite-1-size: 2.5px;
+
+        --satellite-2-orbit-radius: 17px;
+        --satellite-2-size: 3.5px;
+
+        --mars-orbit-radius: 180px;
+        --mars-size: 10px;
+
+        --jupiter-orbit-radius: 260px;
+        /* Plus petit pour Jupiter */
+        --jupiter-size: 30px;
+        --ganymede-orbit-radius: 30px;
+        --ganymede-size: 6px;
+
+        --saturn-orbit-radius: 380px;
+        /* Plus petit pour Saturne */
+        --saturn-size: 28px;
+        --titan-orbit-radius: 35px;
+        --titan-size: 7px;
+        --saturn-ring-width: 60px;
+        --saturn-ring-height: 4px;
+    }
+
+    .home-button {
+        padding: 6px;
+        /* Réduit le padding sur petits écrans */
+        font-size: 0.9em;
+        margin-bottom: 10px;
+        /* Réduit l'espacement */
+    }
+}

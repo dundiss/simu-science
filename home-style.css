@@ -1,0 +1,378 @@
+/* Variables pour un thème de couleurs cohérent */
+:root {
+    --primary-bg: #0d0d1e;
+    /* Fond principal très foncé */
+    --secondary-bg: #1a1a2e;
+    /* Conteneurs et cartes */
+    --accent-color: #8be9fd;
+    /* Bleu clair pour accents et titres */
+    --text-color: #f8f8f2;
+    /* Texte principal */
+    --soft-text-color: #bd93f9;
+    /* Texte secondaire, descriptions */
+    --border-color: rgba(255, 255, 255, 0.1);
+    --hover-color: #6272a4;
+    /* Couleur de survol légère */
+    --disabled-color: #44475a;
+    /* Couleur pour éléments désactivés */
+    --success-color: #50fa7b;
+    /* Vert pour "Actif" */
+    --warning-color: #ffb86c;
+    /* Orange pour "Bientôt Disponible" */
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+    /* MODIFICATION ICI : Permet le défilement sur le body si nécessaire */
+    /* REMPLACER 'overflow: hidden;' par 'overflow-y: auto;' ou 'overflow: auto;' */
+    overflow-y: auto;
+    /* Permet le défilement vertical si le contenu dépasse */
+    position: relative;
+    /* Pour positionner les fonds */
+}
+
+/* Nébuleuse en arrière-plan */
+.nebula-bg {
+    position: fixed;
+    /* MODIFICATION : Utiliser 'fixed' pour qu'il reste en arrière-plan pendant le défilement */
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    filter: blur(40px);
+    opacity: 0.6;
+    background: radial-gradient(circle at 20% 30%, rgba(139, 233, 253, 0.2) 0%, transparent 60%),
+        radial-gradient(circle at 70% 80%, rgba(189, 147, 249, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 50% 10%, rgba(255, 121, 198, 0.15) 0%, transparent 70%);
+    z-index: -2;
+    background-size: 200% 200%;
+    animation: nebula-move 120s linear infinite alternate;
+}
+
+/* Conteneur pour les étoiles */
+.stars-container {
+    position: fixed;
+    /* MODIFICATION : Utiliser 'fixed' pour qu'il reste en arrière-plan pendant le défilement */
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
+    /* Garder hidden ici pour les étoiles, elles ne doivent pas créer de scroll */
+}
+
+/* Style des étoiles individuelles */
+.star {
+    position: absolute;
+    background-color: white;
+    border-radius: 50%;
+    opacity: 0;
+    animation: twinkle 5s infinite alternate ease-in-out;
+}
+
+/* Animation de scintillement des étoiles */
+@keyframes twinkle {
+
+    0%,
+    100% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.home-container {
+    background-color: rgba(26, 26, 46, 0.95);
+    border-radius: 12px;
+    padding: 40px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+    text-align: center;
+    max-width: 960px;
+    width: 100%;
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border-color);
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    /* AJOUT ICI : Le conteneur principal devrait aussi pouvoir défiler si nécessaire */
+    /* max-height: calc(100vh - 40px); /* Ajustez selon votre padding */
+    overflow-y: auto;
+    /* Activer si vous voulez que seul ce conteneur scroll, pas toute la page */
+}
+
+.home-header h1 {
+    color: var(--accent-color);
+    /* margin-bottom: 15px; */
+    font-size: 3em;
+    text-shadow: 0 0 20px rgba(139, 233, 253, 0.6);
+}
+
+.home-header h1 .fas {
+    margin: 0 10px;
+    color: var(--soft-text-color);
+}
+
+.home-header .tagline {
+    font-size: 1.3em;
+    color: var(--soft-text-color);
+    /* margin-bottom: 40px; */
+}
+
+.simulator-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    /* 3 colonnes ou s'adapte */
+    gap: 25px;
+    /* Espace entre les cartes */
+    justify-content: center;
+    align-items: stretch;
+    /* Les cartes ont la même hauteur */
+}
+
+.simulator-card {
+    background-color: var(--secondary-bg);
+    border-radius: 10px;
+    padding: 25px;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.simulator-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    /* Effet 3D et léger grossissement */
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+    background-color: var(--hover-color);
+    /* Couleur de fond au survol */
+}
+
+.simulator-card .card-icon {
+    font-size: 3.5em;
+    /* Grande icône */
+    color: var(--accent-color);
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px rgba(139, 233, 253, 0.4);
+}
+
+.simulator-card .card-title {
+    font-size: 1.8em;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.simulator-card .card-description {
+    font-size: 0.95em;
+    color: var(--soft-text-color);
+    flex-grow: 1;
+    /* Permet à la description de prendre de la place */
+    margin-bottom: 25px;
+    /* Espace avec le statut */
+}
+
+.simulator-card .card-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    position: absolute;
+    /* Positionne le statut en bas de la carte */
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.simulator-card .card-status.active {
+    background-color: var(--success-color);
+    color: var(--primary-bg);
+    /* Texte sombre sur fond vert */
+}
+
+.simulator-card .card-status.coming-soon {
+    background-color: var(--warning-color);
+    color: var(--primary-bg);
+    /* Texte sombre sur fond orange */
+}
+
+/* Styles pour les cartes désactivées */
+.simulator-card.disabled {
+    background-color: var(--disabled-color);
+    cursor: not-allowed;
+    opacity: 0.7;
+    filter: grayscale(80%);
+    /* Effet de grisé */
+    pointer-events: none;
+    /* Empêche les clics */
+}
+
+.simulator-card.disabled:hover {
+    transform: none;
+    /* Pas d'effet au survol */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    /* Le même box-shadow que sans survol */
+    background-color: var(--disabled-color);
+}
+
+.home-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    color: #999;
+    font-size: 0.9em;
+}
+
+.home-footer p {
+    margin: 5px 0;
+}
+
+.logo {
+    max-width: 160px;
+    /* Ajustez cette valeur selon la taille souhaitée */
+    height: auto;
+    margin-top: 0px;
+    /* margin-bottom: 15px; */
+    /* Espacement avec la tagline */
+}
+
+.nebula-bg {
+    /* ... autres styles ... */
+    background-size: 200% 200%;
+    /* Permet au dégradé de bouger */
+    animation: nebula-move 120s linear infinite alternate;
+    /* Mouvement lent */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .home-container {
+        padding: 25px;
+        gap: 20px;
+    }
+
+    .home-header h1 {
+        font-size: 2.2em;
+    }
+
+    .home-header .tagline {
+        font-size: 1.1em;
+        margin-bottom: 30px;
+    }
+
+    .simulator-grid {
+        grid-template-columns: 1fr;
+        /* Une seule colonne sur petits écrans */
+        gap: 20px;
+    }
+
+    .simulator-card {
+        padding: 20px;
+    }
+
+    .simulator-card .card-icon {
+        font-size: 3em;
+    }
+
+    .simulator-card .card-title {
+        font-size: 1.5em;
+    }
+
+    .simulator-card .card-description {
+        font-size: 0.9em;
+        margin-bottom: 20px;
+    }
+
+    .home-footer {
+        margin-top: 30px;
+        font-size: 0.8em;
+    }
+}
+
+@media (max-width: 480px) {
+    .home-container {
+        padding: 15px;
+    }
+
+    .home-header h1 {
+        font-size: 1.8em;
+    }
+
+    .home-header h1 .fas {
+        display: block;
+        /* Icônes sur leur propre ligne si le titre est trop long */
+        margin: 5px auto;
+    }
+
+    .home-header .tagline {
+        font-size: 1em;
+    }
+
+    .simulator-card .card-icon {
+        font-size: 2.5em;
+    }
+
+    .simulator-card .card-title {
+        font-size: 1.3em;
+    }
+}
+
+.home-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    /* Ligne de séparation légère */
+    color: #999;
+    /* Couleur du texte gris */
+    font-size: 0.9em;
+    /* Taille de police légèrement plus petite */
+    text-align: center;
+    /* Assure le centrage du texte */
+}
+
+.home-footer p {
+    margin: 5px 0;
+    /* Espacement entre les lignes du footer */
+}
+
+/* Keyframes pour un léger mouvement de la nébuleuse */
+@keyframes nebula-move {
+    0% {
+        background-position: 0% 0%;
+    }
+
+    100% {
+        background-position: 100% 100%;
+    }
+}
+
+/* Responsive pour le footer sur petits écrans */
+@media (max-width: 768px) {
+    .home-footer {
+        margin-top: 30px;
+        font-size: 0.8em;
+    }
+}

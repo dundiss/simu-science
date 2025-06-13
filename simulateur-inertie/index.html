@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Simulation Barre et Ballon (Contrôle d'Inclinaison) - Tuning PID</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #canvas {
+            border: 1px solid black;
+            background-color: lightblue;
+            width: 90vw;
+            height: auto;
+            max-width: 1000px;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+
+        #description {
+            max-width: 800px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+
+        /* Styles pour la section de contrôle générale */
+        .controls {
+            width: 90vw;
+            max-width: 1000px;
+            margin-bottom: 15px;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            /* Styles pour la mise en valeur */
+            border: 2px solid #5cb85c; /* Bordure verte */
+            background-color: #e6ffe6; /* Fond légèrement vert clair */
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls label {
+            margin-right: 5px;
+            white-space: nowrap;
+            font-weight: bold; /* Texte du label en gras */
+            color: #333;
+        }
+
+        .controls input[type="number"] {
+            width: 70px;
+        }
+
+        /* Styles pour les sections pliables */
+        details {
+            width: 90vw;
+            max-width: 1000px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        summary {
+            font-weight: bold;
+            cursor: pointer;
+            padding: 5px 0;
+            outline: none;
+            /* C'EST ICI LA CLÉ : Masque le marqueur natif pour la plupart des navigateurs */
+            list-style: none;
+        }
+
+        /* Fallback pour WebKit (Chrome, Safari, Edge) si list-style:none ne suffit pas */
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+
+        /* NOUVEAU: On utilise le ::before pour tout le contenu du summary */
+        summary::before {
+            content: '► ' attr(data-title);
+            /* Concatène le symbole et l'attribut data-title */
+            display: inline-block;
+            margin-right: 0.5em;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        details[open]>summary::before {
+            content: '▼ ' attr(data-title);
+            /* Change le symbole quand ouvert */
+            transform: none;
+            /* Pas besoin de rotation, le symbole est déjà bon */
+        }
+
+
+        .pid-controls-content,
+        .info-content,
+        .fault-controls-content {
+            padding-top: 10px;
+        }
+
+
+        .pid-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            /* Important pour que les éléments puissent passer à la ligne sur de petits écrans */
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+
+        .info-grid {
+            font-size: 0.9em;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 5px 15px;
+        }
+
+        .info-grid p {
+            margin: 0;
+        }
+
+        .fault-controls .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 5px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .fault-controls .checkbox-group input {
+            margin-left: 10px;
+        }
+
+        .home-button {
+            display: block;
+            /* Le rendra comme un bloc pour prendre toute la largeur */
+            margin-bottom: 15px;
+            /* Espacement avec le reste des contrôles */
+            padding: 8px;
+            background-color: #007bff;
+            /* Un joli bleu pour le distinguer */
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            /* Supprime le soulignement par défaut */
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            /* Transition douce au survol */
+            font-size: 0.95em;
+            border: 1px solid #0056b3;
+            /* Bordure pour le relief */
+            box-sizing: border-box;
+            /* Inclut padding et bordure dans la largeur */
+        }
+
+        .home-button:hover {
+            background-color: #0056b3;
+            /* Bleu plus foncé au survol */
+            cursor: pointer;
+        }
+        
+        /* Styles pour petits écrans */
+        @media (max-width: 600px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .controls button,
+            .controls input {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            .pid-controls h2,
+            .pid-group>label:first-child,
+            /* Cible le premier label du groupe (ex: "Ballon PID:", "Moteurs Chariots PID:") */
+            .fault-controls h2 {
+                text-align: center;
+                width: 100%;
+                /* Force le titre à prendre toute la largeur */
+                margin-bottom: 10px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Styles spécifiques pour les groupes PID (Ballon et Moteurs Chariots) */
+            .pid-group {
+                flex-direction: column;
+                /* Organise les pid-item en colonne */
+                align-items: center;
+                /* Centre les pid-item */
+            }
+
+            .pid-group .pid-item {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                margin-bottom: 5px;
+                /* Espace entre les paires Kp, Ki, Kd */
+                width: 100%;
+                /* Permet aux paires de s'étirer */
+                justify-content: center;
+                /* Centre la paire label/input */
+            }
+
+            .pid-group .pid-item label {
+                flex-basis: 30px;
+                /* Donne une base pour le label (Kp, Ki, Kd) */
+                text-align: right;
+                margin-right: 0;
+                /* Supprime la marge de droite */
+            }
+
+            .pid-group .pid-item input[type="number"] {
+                width: 50px;
+                /* Réduit la largeur des inputs sur petits écrans pour économiser de l'espace */
+                margin-bottom: 0;
+                /* Supprime la marge du bas */
+            }
+
+            .fault-controls .checkbox-group {
+                flex-direction: row;
+                /* Garde les checkboxes sur la même ligne si possible */
+                justify-content: center;
+            }
+
+            .fault-controls .checkbox-group label {
+                margin-bottom: 0;
+            }
+
+            .home-button {
+                padding: 6px;
+                /* Réduit le padding sur petits écrans */
+                font-size: 0.9em;
+                margin-bottom: 10px;
+                /* Réduit l'espacement */
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a href="../home.html" class="home-button">← Retour à l'accueil</a>
+
+    <h1>Simulation Barre et Ballon (Contrôle d'Inclinaison) - Tuning PID</h1>
+
+    <p id="description">
+        Cette simulation modélise un système de barre et ballon. Un ballon roule sur une barre horizontale
+        dont l'inclinaison est contrôlée par deux chariots verticaux (vis sans fin).
+        L'objectif est d'utiliser un contrôleur PID pour maintenir le ballon à une position désirée
+        sur la barre. Le PID du ballon commande l'inclinaison de la barre, et les PID des chariots
+        contrôlent la hauteur de chaque support.
+    </p>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="controls desired-position-control">
+        <label for="positionInput">Position Désirée du Ballon (0-1.0 m):</label>
+        <input type="number" id="positionInput" value="0.5" min="0" max="1.0" step="0.01">
+        <button onclick="startSimulation()">Démarrer Simulation</button>
+        <button onclick="stopSimulation()">Arrêter Simulation</button>
+        <button onclick="resetSimulation()">Réinitialiser</button>
+        <button id="toggleDescriptionBtn" onclick="toggleDescription()">Masquer Description</button>
+    </div>
+
+    <details class="pid-controls" open>
+        <summary data-title="Réglage des Gains PID"></summary>
+        <div class="pid-controls-content">
+            <div class="pid-group ballon-pid-group">
+                <label>Ballon PID:</label>
+                <div class="pid-item">
+                    <label for="kpBallon">Kp:</label>
+                    <input type="number" id="kpBallon" value="30.0" step="0.1">
+                </div>
+                <div class="pid-item">
+                    <label for="kiBallon">Ki:</label>
+                    <input type="number" id="kiBallon" value="2.0" step="0.01">
+                </div>
+                <div class="pid-item">
+                    <label for="kdBallon">Kd:</label>
+                    <input type="number" id="kdBallon" value="15.0" step="0.01">
+                </div>
+            </div>
+
+            <div class="pid-group motor-pid-group">
+                <label>Moteurs Chariots PID:</label>
+                <div class="pid-item">
+                    <label for="kpChariot">Kp:</label>
+                    <input type="number" id="kpChariot" value="80.0" step="0.1">
+                </div>
+                <div class="pid-item">
+                    <label for="kiChariot">Ki:</label>
+                    <input type="number" id="kiChariot" value="5.1" step="0.01">
+                </div>
+                <div class="pid-item">
+                    <label for="kdChariot">Kd:</label>
+                    <input type="number" id="kdChariot" value="10.0" step="0.01">
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details class="fault-controls" open>
+        <summary data-title="Simulation de Pannes"></summary>
+        <div class="fault-controls-content">
+            <div class="checkbox-group">
+                <label for="motorAFault">Moteur Gauche en Panne :</label>
+                <input type="checkbox" id="motorAFault">
+                <label for="motorBFault">Moteur Droit en Panne :</label>
+                <input type="checkbox" id="motorBFault">
+            </div>
+        </div>
+    </details>
+
+    <details class="info" open>
+        <summary data-title="Informations sur la Simulation"></summary>
+        <div class="info-content info-grid">
+            <p>Position Ballon: <span id="ballonPosDisplay">0.00</span> m</p>
+            <p>Vitesse Ballon: <span id="ballonVelDisplay">0.00</span> m/s</p>
+            <p>Hauteur Point Appui Gauche: <span id="chariotAGapDisplay">0.00</span> m</p>
+            <p>Hauteur Point Appui Droit: <span id="chariotBGapDisplay">0.00</span> m</p>
+            <p>Angle Barre: <span id="barAngleDisplay">0.00</span> rad</p>
+            <p>Erreur PID Ballon: <span id="pidErrorDisplay">0.00</span></p>
+            <p>Hauteur A Désirée: <span id="hauteurADesiredDisplay">0.00</span> m</p>
+            <p>Hauteur B Désirée: <span id="hauteurBDesiredDisplay">0.00</span> m</p>
+        </div>
+    </details>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const positionInput = document.getElementById('positionInput');
+
+        const kpBallonInput = document.getElementById('kpBallon');
+        const kiBallonInput = document.getElementById('kiBallon');
+        const kdBallonInput = document.getElementById('kdBallon');
+
+        const kpChariotInput = document.getElementById('kpChariot');
+        const kiChariotInput = document.getElementById('kiChariot');
+        const kdChariotInput = document.getElementById('kdChariot');
+
+        const motorAFaultCheckbox = document.getElementById('motorAFault');
+        const motorBFaultCheckbox = document.getElementById('motorBFault');
+
+        const descriptionParagraph = document.getElementById('description');
+        const toggleDescriptionBtn = document.getElementById('toggleDescriptionBtn');
+
+        const ballonPosDisplay = document.getElementById('ballonPosDisplay');
+        const ballonVelDisplay = document.getElementById('ballonVelDisplay');
+        const chariotAGapDisplay = document.getElementById('chariotAGapDisplay');
+        const chariotBGapDisplay = document.getElementById('chariotBGapDisplay');
+        const barAngleDisplay = document.getElementById('barAngleDisplay');
+        const pidErrorDisplay = document.getElementById('pidErrorDisplay');
+        const hauteurADesiredDisplay = document.getElementById('hauteurADesiredDisplay');
+        const hauteurBDesiredDisplay = document.getElementById('hauteurBDesiredDisplay');
+
+
+        // Paramètres physiques
+        const m_ballon = 0.05; // Masse du ballon (kg)
+        const g = 9.81; // Accélération due à la gravité (m/s^2)
+        const longueur_barre = 1.0; // Longueur de la barre (m)
+        const hauteur_min_chariot = 0.1; // Hauteur minimale des chariots par rapport au sol (m)
+        const hauteur_max_chariot = 0.6; // Hauteur maximale des chariots par rapport au sol (m)
+        const hauteur_moyenne_barre_initiale = 0.35; // Hauteur moyenne souhaitée pour la barre
+        const vitesse_moteur_chariot_max = 0.5; // Vitesse maximale des moteurs des chariots (m/s)
+
+        // État du système
+        let ballonPosition = longueur_barre / 2; // Position actuelle du ballon sur la barre (0 à longueur_barre)
+        let vitesseBallon = 0; // Vitesse actuelle du ballon sur la barre (m/s)
+
+        let hauteur_chariot_A = hauteur_moyenne_barre_initiale; // Hauteur du chariot gauche (m)
+        let hauteur_chariot_B = hauteur_moyenne_barre_initiale; // Hauteur du chariot droit (m)
+
+        let integralErrorBallon = 0;
+        let previousErrorBallon = 0;
+
+        let integralErrorMotorA = 0;
+        let previousErrorMotorA = 0;
+        let integralErrorMotorB = 0;
+        let previousErrorMotorB = 0;
+
+        let simulationRunning = false;
+        const dt = 0.02; // Pas de temps (20ms)
+        let simulationInterval;
+
+        // Variables pour le dessin responsive
+        let currentCanvasWidth;
+        let currentCanvasHeight;
+        let scale;
+        let groundY;
+        let tigeX_A_canvas;
+        let tigeX_B_canvas;
+        let tigeWidth;
+        let chariotHeight;
+        let chariotWidth;
+        let ballonRadius;
+
+
+        function startSimulation() {
+            if (simulationInterval) {
+                clearInterval(simulationInterval);
+            }
+            integralErrorMotorA = 0;
+            previousErrorMotorA = 0;
+            integralErrorMotorB = 0;
+            previousErrorMotorB = 0;
+
+            simulationRunning = true;
+            simulationInterval = setInterval(updateSystem, dt * 1000);
+            updateSystem();
+        }
+
+        function stopSimulation() {
+            simulationRunning = false;
+            clearInterval(simulationInterval);
+            simulationInterval = null;
+        }
+
+        function resetSimulation() {
+            stopSimulation();
+            ballonPosition = longueur_barre / 2;
+            vitesseBallon = 0;
+            hauteur_chariot_A = hauteur_moyenne_barre_initiale;
+            hauteur_chariot_B = hauteur_moyenne_barre_initiale;
+
+            integralErrorBallon = 0;
+            previousErrorBallon = 0;
+            integralErrorMotorA = 0;
+            previousErrorMotorA = 0;
+            integralErrorMotorB = 0;
+            previousErrorMotorB = 0;
+
+            kpBallonInput.value = "30.0";
+            kiBallonInput.value = "2.0";
+            kdBallonInput.value = "15.0";
+
+            kpChariotInput.value = "80.0";
+            kiChariotInput.value = "5.1";
+            kdChariotInput.value = "10.0";
+
+            positionInput.value = "0.5";
+
+            motorAFaultCheckbox.checked = false;
+            motorBFaultCheckbox.checked = false;
+
+            resizeCanvasAndDraw();
+            updateInfoDisplay({
+                hauteurA: hauteur_moyenne_barre_initiale,
+                hauteurB: hauteur_moyenne_barre_initiale,
+                errorBallon: 0
+            });
+        }
+
+        function toggleDescription() {
+            if (descriptionParagraph.style.display === 'none') {
+                descriptionParagraph.style.display = 'block';
+                toggleDescriptionBtn.textContent = 'Masquer Description';
+            } else {
+                descriptionParagraph.style.display = 'none';
+                toggleDescriptionBtn.textContent = 'Afficher Description';
+            }
+        }
+
+
+        function updateSystem() {
+            if (!simulationRunning) return;
+
+            const Kp_ballon = parseFloat(kpBallonInput.value);
+            const Ki_ballon = parseFloat(kiBallonInput.value);
+            const Kd_ballon = parseFloat(kdBallonInput.value);
+
+            const Kp_moteur_chariot = parseFloat(kpChariotInput.value);
+            const Ki_moteur_chariot = parseFloat(kiChariotInput.value);
+            const Kd_moteur_chariot = parseFloat(kdChariotInput.value);
+
+            const y_desired = parseFloat(positionInput.value);
+            const error_ballon = y_desired - ballonPosition;
+            integralErrorBallon += error_ballon * dt;
+            const derivativeErrorBallon = (error_ballon - previousErrorBallon) / dt;
+            previousErrorBallon = error_ballon;
+
+            let inclinaison_command = Kp_ballon * error_ballon + Ki_ballon * integralErrorBallon + Kd_ballon * derivativeErrorBallon;
+            const max_delta_hauteur_due_au_pid = 0.2;
+            inclinaison_command = Math.max(-max_delta_hauteur_due_au_pid, Math.min(max_delta_hauteur_due_au_pid, inclinaison_command));
+
+            const hauteur_A_desired = hauteur_moyenne_barre_initiale + (inclinaison_command / 2);
+            const hauteur_B_desired = hauteur_moyenne_barre_initiale - (inclinaison_command / 2);
+
+            let vitesse_moteur_A_cmd = 0;
+            let vitesse_moteur_B_cmd = 0;
+
+            if (!motorAFaultCheckbox.checked) {
+                const error_motor_A = hauteur_A_desired - hauteur_chariot_A;
+                integralErrorMotorA += error_motor_A * dt;
+                const derivativeErrorMotorA = (error_motor_A - previousErrorMotorA) / dt;
+                previousErrorMotorA = error_motor_A;
+                vitesse_moteur_A_cmd = Kp_moteur_chariot * error_motor_A + Ki_moteur_chariot * integralErrorMotorA + Kd_moteur_chariot * derivativeErrorMotorA;
+                vitesse_moteur_A_cmd = Math.max(-vitesse_moteur_chariot_max, Math.min(vitesse_moteur_chariot_max, vitesse_moteur_A_cmd));
+                hauteur_chariot_A += vitesse_moteur_A_cmd * dt;
+
+                hauteur_chariot_A = Math.max(hauteur_min_chariot, Math.min(hauteur_max_chariot, hauteur_chariot_A));
+                if (hauteur_chariot_A === hauteur_min_chariot && vitesse_moteur_A_cmd < 0 || hauteur_chariot_A === hauteur_max_chariot && vitesse_moteur_A_cmd > 0) {
+                    integralErrorMotorA -= error_motor_A * dt;
+                }
+            }
+
+            if (!motorBFaultCheckbox.checked) {
+                const error_motor_B = hauteur_B_desired - hauteur_chariot_B;
+                integralErrorMotorB += error_motor_B * dt;
+                const derivativeErrorMotorB = (error_motor_B - previousErrorMotorB) / dt;
+                previousErrorMotorB = error_motor_B;
+                vitesse_moteur_B_cmd = Kp_moteur_chariot * error_motor_B + Ki_moteur_chariot * integralErrorMotorB + Kd_moteur_chariot * derivativeErrorMotorB;
+                vitesse_moteur_B_cmd = Math.max(-vitesse_moteur_chariot_max, Math.min(vitesse_moteur_chariot_max, vitesse_moteur_B_cmd));
+                hauteur_chariot_B += vitesse_moteur_B_cmd * dt;
+
+                hauteur_chariot_B = Math.max(hauteur_min_chariot, Math.min(hauteur_max_chariot, hauteur_chariot_B));
+                if (hauteur_chariot_B === hauteur_min_chariot && vitesse_moteur_B_cmd < 0 || hauteur_chariot_B === hauteur_max_chariot && vitesse_moteur_B_cmd > 0) {
+                    integralErrorMotorB -= error_motor_B * dt;
+                }
+            }
+
+            const delta_hauteur = hauteur_chariot_B - hauteur_chariot_A;
+            const angle_barre = Math.atan2(delta_hauteur, longueur_barre);
+
+            const accelerationBallon = -g * Math.sin(angle_barre);
+
+            vitesseBallon += accelerationBallon * dt;
+            ballonPosition += vitesseBallon * dt;
+
+            if (ballonPosition <= 0) {
+                ballonPosition = 0;
+                vitesseBallon = -vitesseBallon * 0.5;
+                if (Math.abs(vitesseBallon) < 0.05) vitesseBallon = 0;
+            } else if (ballonPosition >= longueur_barre) {
+                ballonPosition = longueur_barre;
+                vitesseBallon = -vitesseBallon * 0.5;
+                if (Math.abs(vitesseBallon) < 0.05) vitesseBallon = 0;
+            }
+
+            drawSystem();
+            updateInfoDisplay({
+                hauteurA: hauteur_A_desired,
+                hauteurB: hauteur_B_desired,
+                errorBallon: error_ballon
+            });
+        }
+
+        function resizeCanvasAndDraw() {
+            currentCanvasWidth = Math.min(window.innerWidth * 0.9, 1000);
+            currentCanvasHeight = currentCanvasWidth / 2;
+
+            canvas.width = currentCanvasWidth;
+            canvas.height = currentCanvasHeight;
+
+            tigeX_A_canvas = currentCanvasWidth * 0.15;
+            tigeX_B_canvas = currentCanvasWidth * 0.85;
+
+            const actualBarWidthCanvas = tigeX_B_canvas - tigeX_A_canvas;
+            scale = actualBarWidthCanvas / longueur_barre;
+
+            groundY = currentCanvasHeight - (currentCanvasHeight * 0.125);
+
+            tigeWidth = Math.max(2, currentCanvasWidth * 0.0125);
+            chariotHeight = Math.max(5, currentCanvasWidth * 0.01875);
+            chariotWidth = Math.max(10, currentCanvasWidth * 0.0375);
+            ballonRadius = Math.max(7, currentCanvasWidth * 0.01875);
+
+            drawSystem();
+        }
+
+
+        function drawSystem() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#444';
+            const tigeHeightVisible = (hauteur_max_chariot + 0.1) * scale;
+            ctx.fillRect(tigeX_A_canvas - tigeWidth / 2, groundY - tigeHeightVisible, tigeWidth, tigeHeightVisible);
+            ctx.fillRect(tigeX_B_canvas - tigeWidth / 2, groundY - tigeHeightVisible, tigeWidth, tigeHeightVisible);
+
+            const y_chariot_A_canvas = groundY - (hauteur_chariot_A * scale);
+            const y_chariot_B_canvas = groundY - (hauteur_chariot_B * scale);
+
+            if (motorAFaultCheckbox.checked) {
+                ctx.fillStyle = 'red';
+            } else {
+                ctx.fillStyle = '#888';
+            }
+            ctx.fillRect(tigeX_A_canvas - chariotWidth / 2, y_chariot_A_canvas - chariotHeight / 2, chariotWidth, chariotHeight);
+
+            if (motorBFaultCheckbox.checked) {
+                ctx.fillStyle = 'red';
+            } else {
+                ctx.fillStyle = '#888';
+            }
+            ctx.fillRect(tigeX_B_canvas - chariotWidth / 2, y_chariot_B_canvas - chariotHeight / 2, chariotWidth, chariotHeight);
+
+
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = Math.max(2, currentCanvasWidth * 0.01);
+            ctx.lineCap = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(tigeX_A_canvas, y_chariot_A_canvas);
+            ctx.lineTo(tigeX_B_canvas, y_chariot_B_canvas);
+            ctx.stroke();
+
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            const ballonCanvasX = tigeX_A_canvas + (ballonPosition * scale);
+            const ratioBallonOnBar = ballonPosition / longueur_barre;
+            const ballonCanvasY = y_chariot_A_canvas + (y_chariot_B_canvas - y_chariot_A_canvas) * ratioBallonOnBar;
+
+            ctx.arc(ballonCanvasX, ballonCanvasY - ballonRadius, ballonRadius, 0, 2 * Math.PI);
+            ctx.fill();
+
+            ctx.fillStyle = '#6B4226';
+            ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+        }
+
+        function updateInfoDisplay(data) {
+            ballonPosDisplay.textContent = ballonPosition.toFixed(3);
+            ballonVelDisplay.textContent = vitesseBallon.toFixed(3);
+            chariotAGapDisplay.textContent = hauteur_chariot_A.toFixed(3);
+            chariotBGapDisplay.textContent = hauteur_chariot_B.toFixed(3);
+
+            const delta_hauteur = hauteur_chariot_B - hauteur_chariot_A;
+            const angle_barre_rad = Math.atan2(delta_hauteur, longueur_barre);
+            barAngleDisplay.textContent = angle_barre_rad.toFixed(3);
+            pidErrorDisplay.textContent = data.errorBallon.toFixed(3);
+            hauteurADesiredDisplay.textContent = data.hauteurA.toFixed(3);
+            hauteurBDesiredDisplay.textContent = data.hauteurB.toFixed(3);
+        }
+
+        window.addEventListener('load', resizeCanvasAndDraw);
+        window.addEventListener('resize', resizeCanvasAndDraw);
+        updateInfoDisplay({
+            hauteurA: hauteur_moyenne_barre_initiale,
+            hauteurB: hauteur_moyenne_barre_initiale,
+            errorBallon: 0
+        });
+    </script>
+</body>
+
+</html>

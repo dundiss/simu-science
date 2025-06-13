@@ -1,0 +1,3 @@
+Cette simulation représente le système solaire interne : Mercure, Vénus, la Terre et Mars. Observez-les orbitres autour
+                du Soleil tandis qu'un satellite tourne autour de la Terre. Vous pouvez mettre en pause, inverser le temps et suivre
+                chaque planète. Le suivi d'une planète est matérialisé par un tracé de laser partant de la terre et un autre partant d'un satellite.

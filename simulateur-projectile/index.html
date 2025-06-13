@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Simulation de Projectile</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background: #fafafa;
+            display: flex;
+            /* Utilisation de flexbox pour centrer le contenu principal */
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            /* S'assure que le body prend toute la hauteur */
+        }
+
+        details {
+            background: #e0f2f7;
+            border: 1px solid #b3e5fc;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 0 auto 30px auto;
+            max-width: 900px;
+            width: 90%;
+            /* Prend 90% de la largeur du parent */
+            box-sizing: border-box;
+            /* Inclut padding et border dans la largeur */
+            text-align: left;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        summary {
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            color: #01579b;
+            list-style: none;
+            display: flex;
+            align-items: center;
+        }
+
+        summary::before {
+            content: '▶';
+            margin-right: 10px;
+            transition: transform 0.2s;
+        }
+
+        details[open]>summary::before {
+            transform: rotate(90deg);
+        }
+
+        details h3 {
+            margin-top: 15px;
+            color: #01579b;
+            font-size: 1.1em;
+        }
+
+        details ul {
+            list-style-type: disc;
+            margin-left: 20px;
+            padding-left: 0;
+        }
+
+        details ul li {
+            margin-bottom: 5px;
+        }
+
+        /* Le canvas ne sera plus stylé directement en CSS pour width/height fixes,
+       le JS gérera sa taille en fonction du container et de l'aspect ratio. */
+        canvas {
+            background: #f0f0f0;
+            border: 1px solid #aaa;
+            display: block;
+            margin: 20px auto;
+            max-width: 90%;
+            /* Le canvas ne dépassera jamais 90% de la largeur de l'écran */
+            height: auto;
+            /* Hauteur ajustée automatiquement */
+        }
+
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            /* Permet aux éléments de passer à la ligne */
+            justify-content: center;
+            gap: 30px;
+            max-width: 900px;
+            width: 90%;
+            /* Prend 90% de la largeur du parent */
+            margin: auto;
+            align-items: flex-start;
+        }
+
+        .panel {
+            flex: 1 1 400px;
+            /* flex-grow, flex-shrink, flex-basis: s'étire, se réduit, base de 400px */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background: #fff;
+            border-radius: 5px;
+            min-width: 280px;
+            /* Empêche les panneaux de devenir trop petits */
+            box-sizing: border-box;
+            /* Inclut padding et border dans la largeur */
+        }
+
+        .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+
+        .collapsible-header h2 {
+            margin: 0;
+            font-size: 1.1em;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s ease;
+            transform: rotate(90deg);
+            /* Par défaut ouvert */
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        /* Nouvelle règle pour cibler directement le contenu réduit */
+        .collapsible-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+            /* Ajout important pour s'assurer que le contenu ne prend pas de place */
+            display: none;
+            /* Cache complètement l'élément une fois la transition terminée */
+        }
+
+        .collapsible-header.collapsed .toggle-icon {
+            transform: rotate(0deg);
+            /* Flèche vers la droite quand réduit */
+        }
+
+        label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            /* Alignement vertical des labels */
+            width: 100%;
+        }
+
+        select,
+        input[type="range"] {
+            flex: 1;
+            margin-left: 10px;
+            min-width: 100px;
+            /* Évite que les inputs ne deviennent trop petits */
+        }
+
+        .panel .collapsible-content .statistics-content-p {
+            margin: 5px 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .panel .collapsible-content strong {
+            color: #333;
+        }
+
+        .panel .collapsible-content button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            /* Meilleur padding pour les boutons */
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .home-button {
+            display: block;
+            /* Le rendra comme un bloc pour prendre toute la largeur */
+            margin-bottom: 15px;
+            /* Espacement avec le reste des contrôles */
+            padding: 8px;
+            background-color: #007bff;
+            /* Un joli bleu pour le distinguer */
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            /* Supprime le soulignement par défaut */
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            /* Transition douce au survol */
+            font-size: 0.95em;
+            border: 1px solid #0056b3;
+            /* Bordure pour le relief */
+            box-sizing: border-box;
+            /* Inclut padding et bordure dans la largeur */
+        }
+
+        .home-button:hover {
+            background-color: #0056b3;
+            /* Bleu plus foncé au survol */
+            cursor: pointer;
+        }
+
+        /* Media Queries pour les petits écrans */
+        @media (max-width: 768px) {
+            .dashboard {
+                flex-direction: column;
+                /* Les panneaux s'empilent sur les petits écrans */
+                gap: 15px;
+                width: 95%;
+                /* Plus de largeur sur les petits écrans */
+            }
+
+            .panel {
+                max-width: 100%;
+                /* Les panneaux prennent toute la largeur disponible */
+            }
+
+            .home-button {
+                padding: 6px;
+                /* Réduit le padding sur petits écrans */
+                font-size: 0.9em;
+                margin-bottom: 10px;
+                /* Réduit l'espacement */
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a href="../home.html" class="home-button">← Retour à l'accueil</a>
+
+    <h1>Simulation de Projectile</h1>
+
+    <details open>
+        <summary>Simulateur de Trajectoire de Projectile : Explorer la Physique en Mouvement</summary>
+        <p>Ce simulateur interactif vous permet de visualiser et d'analyser la trajectoire d'un projectile en temps
+            réel.
+            Plongez au cœur des principes fondamentaux de la physique, de la simple parabole à l'impact complexe de la
+            résistance de l'air.</p>
+    
+        <h3>Paramètres ajustables :</h3>
+        <ul>
+            <li><strong>Vitesse initiale (V<sub>0</sub>)</strong> : Définissez la puissance de lancement de votre
+                projectile.
+            </li>
+            <li><strong>Angle de tir (&theta;)</strong> : Modifiez l'inclinaison pour observer l'influence sur la
+                portée et
+                la hauteur.</li>
+            <li><strong>Masse (m)</strong> : Observez comment le poids du projectile affecte sa trajectoire, en
+                particulier
+                face aux frottements.</li>
+            <li><strong>Diamètre (D)</strong> : Ajustez la taille du projectile pour voir son impact sur la résistance
+                de
+                l'air.</li>
+            <li><strong>Coefficient de traînée (C<sub>d</sub>)</strong> : Expérimentez avec l'aérodynamisme du projectile ;
+                une
+                valeur
+                plus faible signifie moins de résistance.</li>
+        </ul>
+    
+        <h3>Modes de simulation :</h3>
+        <ul>
+            <li><strong>Animation</strong> : Visualisez le mouvement du projectile point par point.</li>
+            <li><strong>Courbe complète</strong> : Affichez instantanément toute la trajectoire parcourue.</li>
+            <li><strong>Animation avec rebonds</strong> : Observez le projectile rebondir sur le sol, perdant de
+                l'énergie à
+                chaque impact.</li>
+            <li><strong>Avec résistance de l'air</strong> : Activez la simulation du frottement de l'air, qui ralentit
+                le
+                projectile et modifie significativement sa trajectoire, sa portée et sa hauteur maximale.</li>
+        </ul>
+    
+        <h3>Analyse des résultats :</h3>
+        <p>En bas de l'écran, suivez les **statistiques clés** de chaque tir. Pendant l'animation, ces valeurs sont
+            mises à
+            jour en temps réel :</p>
+        <ul>
+            <li><strong>Portée</strong> : La distance horizontale parcourue par le projectile (valeur finale ou
+                instantanée).
+            </li>
+            <li><strong>Hauteur maximale</strong> : L'altitude la plus élevée atteinte (valeur finale ou instantanée).
+            </li>
+            <li><strong>Durée du vol</strong> : Le temps total passé en l'air (valeur finale ou écoulée).</li>
+            <li><strong>Distance parcourue</strong> : La distance totale que le projectile a parcourue le long de sa
+                trajectoire (valeur finale ou cumulée instantanément).</li>
+            <li><strong>Vitesse instantanée</strong> : La vitesse du projectile à un moment précis de sa trajectoire
+                (valeur
+                instantanée pendant l'animation).</li>
+        </ul>
+    </details>
+
+    <div class="dashboard">
+        <div class="panel controls">
+            <div class="collapsible-header" id="controlsHeader">
+                <h2>Paramètres de Contrôle <span class="toggle-icon">></span></h2>
+            </div>
+            <div class="collapsible-content" id="controlsContent">
+                <label>
+                    Vitesse initiale (m/s)
+                    <input type="range" id="v0" min="5" max="100" value="30">
+                    <span id="v0Value">30</span>
+                </label>
+
+                <label>
+                    Angle (°)
+                    <input type="range" id="angle" min="10" max="80" value="45">
+                    <span id="angleValue">45</span>
+                </label>
+
+                <label>
+                    Masse (kg)
+                    <input type="range" id="mass" min="0.1" max="10" step="0.1" value="1">
+                    <span id="massValue">1.0</span>
+                </label>
+
+                <label>
+                    Diamètre (m)
+                    <input type="range" id="diameter" min="0.01" max="0.5" step="0.01" value="0.1">
+                    <span id="diameterValue">0.10</span>
+                </label>
+
+                <label>
+                    Coefficient de traînée (Cd)
+                    <input type="range" id="cd" min="0.1" max="1.5" step="0.01" value="0.47">
+                    <span id="cdValue">0.47</span>
+                </label>
+
+                <label>
+                    Mode
+                    <select id="mode">
+                        <option value="animation">Animation</option>
+                        <option value="courbe">Courbe complète</option>
+                        <option value="rebond">Animation avec rebonds</option>
+                        <option value="air_resistance">Avec résistance de l'air</option>
+                    </select>
+                </label>
+
+                <button id="startBtn">Lancer le projectile</button>
+            </div>
+        </div>
+
+        <div class="panel statistics">
+            <div class="collapsible-header" id="statisticsHeader">
+                <h2>Statistiques du projectile <span class="toggle-icon">></span></h2>
+            </div>
+            <div class="collapsible-content" id="statisticsContent">
+                <p class="statistics-content-p">Portée: <strong id="rangeValue">0.00</strong> m</p>
+                <p class="statistics-content-p">Hauteur maximale: <strong id="maxHeightValue">0.00</strong> m</p>
+                <p class="statistics-content-p">Durée du vol: <strong id="flightTimeValue">0.00</strong> s</p>
+                <p class="statistics-content-p">Distance parcourue: <strong id="distanceValue">0.00</strong> m</p>
+                <p class="statistics-content-p">Vitesse instantanée: <strong id="instantSpeedValue">0.00</strong> m/s
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="canvas" width="900" height="500"></canvas>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        const g = 9.81;
+        const dt = 0.02;
+        const AIR_DENSITY = 1.225;
+
+        const v0Input = document.getElementById("v0");
+        const angleInput = document.getElementById("angle");
+        const massInput = document.getElementById("mass");
+        const diameterInput = document.getElementById("diameter");
+        const cdInput = document.getElementById("cd");
+        const modeInput = document.getElementById("mode");
+        const v0Value = document.getElementById("v0Value");
+        const angleValue = document.getElementById("angleValue");
+        const massValue = document.getElementById("massValue");
+        const diameterValue = document.getElementById("diameterValue");
+        const cdValue = document.getElementById("cdValue");
+        const startBtn = document.getElementById("startBtn");
+
+        const rangeValueDisplay = document.getElementById("rangeValue");
+        const maxHeightValueDisplay = document.getElementById("maxHeightValue");
+        const flightTimeValueDisplay = document.getElementById("flightTimeValue");
+        const distanceValueDisplay = document.getElementById("distanceValue");
+        const instantSpeedValueDisplay = document.getElementById("instantSpeedValue");
+
+        let animationId;
+        let currentScale;
+
+        const controlsHeader = document.getElementById("controlsHeader");
+        const controlsContent = document.getElementById("controlsContent");
+        const statisticsHeader = document.getElementById("statisticsHeader");
+        const statisticsContent = document.getElementById("statisticsContent");
+
+        v0Input.oninput = () => (v0Value.textContent = v0Input.value);
+        angleInput.oninput = () => (angleValue.textContent = angleInput.value);
+        massInput.oninput = () => (massValue.textContent = parseFloat(massInput.value).toFixed(1));
+        diameterInput.oninput = () => (diameterValue.textContent = parseFloat(diameterInput.value).toFixed(2));
+        cdInput.oninput = () => (cdValue.textContent = parseFloat(cdInput.value).toFixed(2));
+
+        function calculateTheoreticalMax(v0, angleDeg) {
+            const angleRad = angleDeg * Math.PI / 180;
+            const v0y = v0 * Math.sin(angleRad);
+            const v0x = v0 * Math.cos(angleRad);
+
+            const timeToMaxHeight = v0y / g;
+            const maxHeight = (v0y * v0y) / (2 * g);
+            const totalFlightTime = 2 * timeToMaxHeight;
+            const range = v0x * totalFlightTime;
+
+            return { range, maxHeight, totalFlightTime };
+        }
+
+        function determineScale(v0, angleDeg, mass, diameter, cd, useAirResistanceForScale, canvasWidth, canvasHeight) {
+            let requiredWidth = 0;
+            let requiredHeight = 0;
+
+            if (useAirResistanceForScale) {
+                const angleRad = angleDeg * Math.PI / 180;
+                let vx = v0 * Math.cos(angleRad);
+                let vy = v0 * Math.sin(angleRad);
+                let x_temp = 0, y_temp = 0, t_temp = 0;
+
+                const area = Math.PI * (diameter / 2) ** 2;
+                const K_drag_coeff = 0.5 * AIR_DENSITY * area * cd;
+
+                let max_h_temp = 0;
+
+                while (y_temp >= -10 && t_temp < 500) {
+                    const speed = Math.sqrt(vx * vx + vy * vy);
+                    if (speed > 0.01) {
+                        const dragAcceleration = (K_drag_coeff * speed) / mass;
+                        vx -= dragAcceleration * (vx / speed) * dt;
+                        vy -= (g + dragAcceleration * (vy / speed)) * dt;
+                    } else {
+                        vy -= g * dt;
+                    }
+
+                    x_temp += vx * dt;
+                    y_temp += vy * dt;
+                    t_temp += dt;
+
+                    if (y_temp > max_h_temp) max_h_temp = y_temp;
+                }
+                requiredWidth = x_temp;
+                requiredHeight = max_h_temp;
+
+            } else {
+                const theoretical = calculateTheoreticalMax(v0, angleDeg);
+                requiredWidth = theoretical.range;
+                requiredHeight = theoretical.maxHeight;
+            }
+
+            const marginFactor = 1.2;
+            requiredWidth *= marginFactor;
+            requiredHeight *= marginFactor;
+
+            if (requiredWidth < 10) requiredWidth = 10;
+            if (requiredHeight < 5) requiredHeight = 5;
+
+            const scaleX = (canvasWidth - 50) / requiredWidth;
+            const scaleY = (canvasHeight - 50) / requiredHeight;
+
+            return Math.min(scaleX, scaleY);
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = "#ccc";
+            ctx.fillStyle = "#333";
+            ctx.font = "12px Arial";
+
+            let step = 1;
+            const effectiveCanvasWidth = canvas.width / currentScale;
+            const effectiveCanvasHeight = canvas.height / currentScale;
+
+            if (effectiveCanvasWidth > 100) step = 10;
+            if (effectiveCanvasWidth > 250) step = 25;
+            if (effectiveCanvasWidth > 500) step = 50;
+            if (effectiveCanvasWidth > 1000) step = 100;
+
+            if (effectiveCanvasHeight > 100 && step < 10) step = 10;
+            if (effectiveCanvasHeight > 250 && step < 25) step = 25;
+
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.stroke();
+
+            for (let xMeters = 0; xMeters * currentScale < canvas.width; xMeters += step) {
+                const px = xMeters * currentScale;
+                ctx.moveTo(px, canvas.height);
+                ctx.lineTo(px, canvas.height - 10);
+                ctx.fillText(xMeters + "m", px + 5, canvas.height - 15);
+            }
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, canvas.height);
+            ctx.stroke();
+
+            for (let yMeters = 0; yMeters * currentScale < canvas.height; yMeters += step) {
+                if (yMeters === 0) continue;
+                const py = canvas.height - (yMeters * currentScale);
+                ctx.moveTo(0, py);
+                ctx.lineTo(10, py);
+                ctx.fillText(yMeters + "m", 15, py + 5);
+            }
+            ctx.stroke();
+
+            ctx.strokeStyle = "rgba(200, 200, 200, 0.5)";
+            ctx.beginPath();
+            for (let xMeters = 0; xMeters * currentScale < canvas.width; xMeters += step) {
+                const px = xMeters * currentScale;
+                ctx.moveTo(px, canvas.height);
+                ctx.lineTo(px, 0);
+            }
+            for (let yMeters = 0; yMeters * currentScale < canvas.height; yMeters += step) {
+                if (yMeters === 0) continue;
+                const py = canvas.height - (yMeters * currentScale);
+                ctx.moveTo(0, py);
+                ctx.lineTo(canvas.width, py);
+            }
+            ctx.stroke();
+        }
+
+        function drawProjectile(x, y, radius, color1 = "red", color2 = "darkred", outlineColor = "black") {
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 5;
+            ctx.shadowOffsetX = 3;
+            ctx.shadowOffsetY = 3;
+
+            const gradient = ctx.createRadialGradient(
+                x - radius * 0.3, y - radius * 0.3, radius * 0.1,
+                x, y, radius
+            );
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(1, color2);
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, 2 * Math.PI);
+
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            ctx.strokeStyle = outlineColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function simulateTrajectory(v0, angleDeg, mass, diameter, cd, applyAirResistance, rebond) {
+            const angleRad = angleDeg * Math.PI / 180;
+            let vx = v0 * Math.cos(angleRad);
+            let vy = v0 * Math.sin(angleRad);
+
+            let x = 0, y = 0, t = 0, bounces = 0;
+            const path = [];
+            const energyLoss = 0.7;
+
+            let maxHeightReached = 0;
+            let flightTimeTotal = 0;
+            let finalRangeReached = 0;
+            let totalDistanceTravelled = 0;
+
+            const instantSpeeds = [];
+            const totalDistanceTravelledOfFrames = [];
+
+            const area = Math.PI * (diameter / 2) ** 2;
+            const K_drag_coeff = 0.5 * AIR_DENSITY * area * cd;
+
+            while (true) {
+                let currentSpeed;
+
+                if (applyAirResistance) {
+                    currentSpeed = Math.sqrt(vx * vx + vy * vy);
+                    if (currentSpeed > 0.01) {
+                        const dragAcceleration = (K_drag_coeff * currentSpeed) / mass;
+                        vx -= dragAcceleration * (vx / currentSpeed) * dt;
+                        vy -= (g + dragAcceleration * (vy / currentSpeed)) * dt;
+                    } else {
+                        vy -= g * dt;
+                        currentSpeed = Math.abs(vy);
+                    }
+                } else {
+                    vy -= g * dt;
+                    currentSpeed = Math.sqrt(vx * vx + vy * vy);
+                }
+
+                const newX = x + vx * dt;
+                const newY = y + vy * dt;
+                t += dt;
+
+                const segmentDistance = Math.sqrt(Math.pow(newX - x, 2) + Math.pow(newY - y, 2));
+                totalDistanceTravelled += segmentDistance;
+
+                x = newX;
+                y = newY;
+
+                if (y > maxHeightReached) {
+                    maxHeightReached = y;
+                }
+
+                const px = x * currentScale;
+                const py = canvas.height - (y * currentScale);
+
+                instantSpeeds.push(currentSpeed);
+                totalDistanceTravelledOfFrames.push(totalDistanceTravelled);
+
+
+                if (px > canvas.width + 100 || (y < 0 && (!rebond || bounces >= 3) && t > 0.1)) {
+                    finalRangeReached = x;
+                    flightTimeTotal = t;
+                    break;
+                }
+
+                if (y < 0) {
+                    if (rebond && Math.abs(vy) > 0.5 && bounces < 3) {
+                        vy = -vy * energyLoss;
+                        y = 0;
+                        bounces++;
+                        instantSpeeds[instantSpeeds.length - 1] = Math.sqrt(vx * vx + vy * vy);
+                    } else {
+                        finalRangeReached = x;
+                        flightTimeTotal = t;
+                        break;
+                    }
+                }
+                path.push({ x: px, y: py });
+            }
+            return { path, finalRangeReached, maxHeightReached, flightTimeTotal, totalDistanceTravelled, instantSpeeds, totalDistanceTravelledOfFrames };
+        }
+
+        function traceCourbeOnly(v0, angleDeg, applyAirResistance) {
+            const mass = parseFloat(massInput.value);
+            const diameter = parseFloat(diameterInput.value);
+            const cd = parseFloat(cdInput.value);
+
+            currentScale = determineScale(v0, angleDeg, mass, diameter, cd, applyAirResistance, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+
+            const result = simulateTrajectory(v0, angleDeg, mass, diameter, cd, applyAirResistance, false);
+            const path = result.path;
+
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            for (const point of path) {
+                ctx.lineTo(point.x, point.y);
+            }
+            ctx.strokeStyle = "rgba(0, 0, 255, 0.5)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            rangeValueDisplay.textContent = result.finalRangeReached.toFixed(2);
+            maxHeightValueDisplay.textContent = result.maxHeightReached.toFixed(2);
+            flightTimeValueDisplay.textContent = result.totalFlightTime.toFixed(2);
+            distanceValueDisplay.textContent = result.totalDistanceTravelled.toFixed(2);
+            instantSpeedValueDisplay.textContent = "N/A";
+        }
+
+        function animateProjectile(v0, angleDeg, rebond = false, applyAirResistance = false) {
+            cancelAnimationFrame(animationId);
+
+            const mass = parseFloat(massInput.value);
+            const diameter = parseFloat(diameterInput.value);
+            const cd = parseFloat(cdInput.value);
+
+            currentScale = determineScale(v0, angleDeg, mass, diameter, cd, applyAirResistance, canvas.width, canvas.height);
+
+            const result = simulateTrajectory(v0, angleDeg, mass, diameter, cd, applyAirResistance, rebond);
+            const theoreticalPath = result.path;
+            const instantSpeeds = result.instantSpeeds;
+            const totalDistanceTravelledOfFrames = result.totalDistanceTravelledOfFrames;
+
+            let currentFrame = 0;
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawGrid();
+
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height);
+                for (let i = 0; i < theoreticalPath.length; i++) {
+                    ctx.lineTo(theoreticalPath[i].x, theoreticalPath[i].y);
+                }
+                ctx.strokeStyle = "rgba(0, 0, 255, 0.3)";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                if (currentFrame < theoreticalPath.length) {
+                    const point = theoreticalPath[currentFrame];
+                    const currentSpeed = instantSpeeds[currentFrame];
+                    const currentX = (point.x / currentScale);
+                    const currentY = ((canvas.height - point.y) / currentScale);
+
+                    rangeValueDisplay.textContent = currentX.toFixed(2);
+                    maxHeightValueDisplay.textContent = currentY.toFixed(2);
+                    flightTimeValueDisplay.textContent = (currentFrame * dt).toFixed(2);
+
+                    distanceValueDisplay.textContent = totalDistanceTravelledOfFrames[currentFrame].toFixed(2);
+                    instantSpeedValueDisplay.textContent = currentSpeed.toFixed(2);
+
+                    const projectileRadius = 8;
+                    drawProjectile(point.x, point.y, projectileRadius, "lightblue", "darkblue", "black");
+                    currentFrame++;
+                    animationId = requestAnimationFrame(animate);
+                } else {
+                    rangeValueDisplay.textContent = result.finalRangeReached.toFixed(2);
+                    maxHeightValueDisplay.textContent = result.maxHeightReached.toFixed(2);
+                    flightTimeValueDisplay.textContent = result.totalFlightTime.toFixed(2);
+                    distanceValueDisplay.textContent = result.totalDistanceTravelled.toFixed(2);
+                    instantSpeedValueDisplay.textContent = "0.00";
+                    return;
+                }
+            }
+
+            animate();
+        }
+
+        function drawInitialProjectile() {
+            cancelAnimationFrame(animationId);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const v0 = parseFloat(v0Input.value);
+            const angle = parseFloat(angleInput.value);
+            const mass = parseFloat(massInput.value);
+            const diameter = parseFloat(diameterInput.value);
+            const cd = parseFloat(cdInput.value);
+            const mode = modeInput.value;
+
+            const applyAirResistance = (mode === "air_resistance");
+            currentScale = determineScale(v0, angle, mass, diameter, cd, applyAirResistance, canvas.width, canvas.height);
+
+            drawGrid();
+            const projectileRadius = 8;
+            drawProjectile(0 * currentScale, canvas.height - (0 * currentScale), projectileRadius, "lightblue", "darkblue", "black");
+
+            rangeValueDisplay.textContent = "0.00";
+            maxHeightValueDisplay.textContent = "0.00";
+            flightTimeValueDisplay.textContent = "0.00";
+            distanceValueDisplay.textContent = "0.00";
+            instantSpeedValueDisplay.textContent = "0.00";
+        }
+
+        startBtn.onclick = () => {
+            const v0 = parseFloat(v0Input.value);
+            const angle = parseFloat(angleInput.value);
+            const mode = modeInput.value;
+            const mass = parseFloat(massInput.value);
+            const diameter = parseFloat(diameterInput.value);
+            const cd = parseFloat(cdInput.value);
+
+            rangeValueDisplay.textContent = "0.00";
+            maxHeightValueDisplay.textContent = "0.00";
+            flightTimeValueDisplay.textContent = "0.00";
+            distanceValueDisplay.textContent = "0.00";
+            instantSpeedValueDisplay.textContent = "0.00";
+
+            cancelAnimationFrame(animationId);
+
+            const applyAirResistance = (mode === "air_resistance");
+            const applyRebound = (mode === "rebond");
+
+            if (mode === "courbe") {
+                traceCourbeOnly(v0, angle, applyAirResistance);
+            } else if (mode === "animation") {
+                animateProjectile(v0, angle, false, false);
+            } else if (mode === "rebond") {
+                animateProjectile(v0, angle, true, false);
+            } else if (mode === "air_resistance") {
+                animateProjectile(v0, angle, false, true);
+            }
+        };
+
+        // Modification de la fonction toggleCollapse
+        function toggleCollapse(header, content, forceCollapsed = null) {
+            // Applique la classe 'collapsed' à l'en-tête pour faire tourner l'icône
+            if (forceCollapsed !== null) {
+                header.classList.toggle("collapsed", forceCollapsed);
+            } else {
+                header.classList.toggle("collapsed");
+            }
+
+            // Applique la classe 'collapsed' au contenu pour le masquer/afficher
+            // C'est ici que la correction majeure est faite
+            if (forceCollapsed !== null) {
+                content.classList.toggle("collapsed", forceCollapsed);
+            } else {
+                content.classList.toggle("collapsed");
+            }
+        }
+
+        controlsHeader.addEventListener("click", () => toggleCollapse(controlsHeader, controlsContent));
+        statisticsHeader.addEventListener("click", () => toggleCollapse(statisticsHeader, statisticsContent));
+
+        function handlePanelCollapse() {
+            const isSmallScreen = window.innerWidth <= 768;
+
+            // Force la réduction des deux panneaux si petit écran, ou le dépliement si grand écran
+            toggleCollapse(controlsHeader, controlsContent, isSmallScreen);
+            toggleCollapse(statisticsHeader, statisticsContent, isSmallScreen);
+        }
+
+        function resizeCanvas() {
+            const aspectRatio = 900 / 500;
+            const parentWidth = canvas.parentElement.offsetWidth;
+
+            let newWidth = Math.min(parentWidth * 0.9, 900);
+            let newHeight = newWidth / aspectRatio;
+
+            const maxAllowedHeight = window.innerHeight * 0.7;
+            if (newHeight > maxAllowedHeight) {
+                newHeight = maxAllowedHeight;
+                newWidth = newHeight * aspectRatio;
+            }
+
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+
+            if (animationId) {
+                const v0 = parseFloat(v0Input.value);
+                const angle = parseFloat(angleInput.value);
+                const mode = modeInput.value;
+                const applyAirResistance = (mode === "air_resistance");
+                const applyRebound = (mode === "rebond");
+
+                if (mode === "courbe") {
+                    traceCourbeOnly(v0, angle, applyAirResistance);
+                } else if (mode === "animation") {
+                    animateProjectile(v0, angle, false, false);
+                } else if (mode === "rebond") {
+                    animateProjectile(v0, angle, true, false);
+                } else if (mode === "air_resistance") {
+                    animateProjectile(v0, angle, false, true);
+                }
+            } else {
+                drawInitialProjectile();
+            }
+        }
+
+
+        document.addEventListener("DOMContentLoaded", () => {
+            v0Input.value = v0Value.textContent;
+            angleInput.value = angleValue.textContent;
+            massInput.value = massValue.textContent;
+            diameterInput.value = diameterValue.textContent;
+            cdInput.value = cdValue.textContent;
+
+            handlePanelCollapse(); // Gérer l'état initial des panneaux
+
+            resizeCanvas();
+            drawInitialProjectile();
+        });
+
+        v0Input.addEventListener("input", drawInitialProjectile);
+        angleInput.addEventListener("input", drawInitialProjectile);
+        massInput.addEventListener("input", drawInitialProjectile);
+        diameterInput.addEventListener("input", drawInitialProjectile);
+        cdInput.addEventListener("input", drawInitialProjectile);
+        modeInput.addEventListener("change", drawInitialProjectile);
+
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                resizeCanvas();
+                handlePanelCollapse();
+            }, 250);
+        });
+    </script>
+</body>
+
+</html>
