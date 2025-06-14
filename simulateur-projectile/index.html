@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulation de Projectile</title>
     <style>
         body {
@@ -814,9 +815,9 @@
         statisticsHeader.addEventListener("click", () => toggleCollapse(statisticsHeader, statisticsContent));
 
         function handlePanelCollapse() {
-            const isSmallScreen = window.innerWidth <= 768;
+            const isSmallScreen = window.innerWidth <= 768; // Defines what a "small screen" is
 
-            // Force la réduction des deux panneaux si petit écran, ou le dépliement si grand écran
+            // Force collapse both panels if it's a small screen, or expand if it's a large screen
             toggleCollapse(controlsHeader, controlsContent, isSmallScreen);
             toggleCollapse(statisticsHeader, statisticsContent, isSmallScreen);
         }
@@ -858,17 +859,20 @@
             }
         }
 
-
         document.addEventListener("DOMContentLoaded", () => {
+            // Update slider positions with initial displayed values
             v0Input.value = v0Value.textContent;
             angleInput.value = angleValue.textContent;
             massInput.value = massValue.textContent;
             diameterInput.value = diameterValue.textContent;
             cdInput.value = cdValue.textContent;
 
-            handlePanelCollapse(); // Gérer l'état initial des panneaux
+            // Handle initial panel collapse state based on screen size
+            handlePanelCollapse();
 
+            // Call initial canvas resize
             resizeCanvas();
+            // Draw the initial projectile after canvas resize
             drawInitialProjectile();
         });
 
@@ -884,7 +888,7 @@
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
                 resizeCanvas();
-                handlePanelCollapse();
+                handlePanelCollapse(); // Manage panel collapse on resize
             }, 250);
         });
     </script>
