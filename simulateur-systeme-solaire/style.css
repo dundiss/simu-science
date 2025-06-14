@@ -495,36 +495,26 @@ body {
 @media (max-width: 768px) {
     .main-container {
         flex-direction: column;
-        /* Empile les éléments : contrôles en haut, système solaire en bas */
         height: auto;
-        /* La hauteur peut s'ajuster */
     }
 
     .controls-container {
         width: 100%;
-        /* Prend toute la largeur */
         border-right: none;
-        /* Pas de bordure droite */
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        /* Bordure en bas */
         flex: none;
-        /* Ne prend plus de proportion fixe */
         padding: 15px;
-        /* Réduit le padding */
     }
 
     .controls-container label,
     .controls-container select,
     .controls-container button {
         font-size: 0.9em;
-        /* Réduit la taille de police */
         padding: 6px;
-        /* Réduit le padding */
     }
 
     #description-area {
         max-width: 100%;
-        /* S'étend sur toute la largeur */
         margin-top: 10px;
         padding: 10px;
         font-size: 0.8em;
@@ -532,49 +522,37 @@ body {
 
     .solar-system-container {
         flex: none;
-        /* Ne prend plus de proportion fixe */
         width: 100%;
-        /* Prend toute la largeur */
         height: 70vh;
-        /* Définit une hauteur fixe pour la simulation sur les petits écrans */
         min-height: 400px;
-        /* Hauteur minimale pour éviter qu'il ne soit trop petit */
+        /* AJOUT IMPORTANT ICI : Permet le défilement à l'intérieur de ce conteneur */
+        overflow: auto;
+        /* Permettra le défilement si le contenu (système solaire) dépasse */
+        /* IMPORTANT : Si vous aviez 'overflow: hidden;' ici, REMPLACEZ-LE par 'overflow: auto;' */
     }
 
-    /* Ajustement des tailles et rayons des planètes et orbites pour les petits écrans */
+    /* ... (vos ajustements de taille et de rayon pour les planètes restent ici) ... */
     :root {
         --sun-size: 60px;
-        /* Soleil plus petit */
-
         --mercury-orbit-radius: 60px;
         --mercury-size: 8px;
-
         --venus-orbit-radius: 90px;
         --venus-size: 12px;
-
         --earth-orbit-radius: 130px;
         --earth-size: 15px;
-
         --moon-orbit-radius: 20px;
         --moon-size: 5px;
-
         --satellite-1-orbit-radius: 12px;
         --satellite-1-size: 2.5px;
-
         --satellite-2-orbit-radius: 17px;
         --satellite-2-size: 3.5px;
-
         --mars-orbit-radius: 180px;
         --mars-size: 10px;
-
         --jupiter-orbit-radius: 260px;
-        /* Plus petit pour Jupiter */
         --jupiter-size: 30px;
         --ganymede-orbit-radius: 30px;
         --ganymede-size: 6px;
-
         --saturn-orbit-radius: 380px;
-        /* Plus petit pour Saturne */
         --saturn-size: 28px;
         --titan-orbit-radius: 35px;
         --titan-size: 7px;
