@@ -3,6 +3,7 @@
 
 <head>
     <title>Simulation Barre et Ballon (Contrôle d'Inclinaison) - Tuning PID</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
             font-family: sans-serif;
@@ -51,8 +52,10 @@
             flex-wrap: wrap;
             justify-content: center;
             /* Styles pour la mise en valeur */
-            border: 2px solid #5cb85c; /* Bordure verte */
-            background-color: #e6ffe6; /* Fond légèrement vert clair */
+            border: 2px solid #5cb85c;
+            /* Bordure verte */
+            background-color: #e6ffe6;
+            /* Fond légèrement vert clair */
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
@@ -60,7 +63,8 @@
         .controls label {
             margin-right: 5px;
             white-space: nowrap;
-            font-weight: bold; /* Texte du label en gras */
+            font-weight: bold;
+            /* Texte du label en gras */
             color: #333;
         }
 
@@ -172,6 +176,9 @@
             /* Bordure pour le relief */
             box-sizing: border-box;
             /* Inclut padding et bordure dans la largeur */
+            width: 90vw;
+            /* Ensure it takes full width on smaller screens */
+            max-width: 1000px;
         }
 
         .home-button:hover {
@@ -628,6 +635,23 @@
             ctx.lineTo(tigeX_B_canvas, y_chariot_B_canvas);
             ctx.stroke();
 
+            // Dessine la position désirée sur la barre
+            const y_desired_canvas = parseFloat(positionInput.value);
+            const desiredBallonCanvasX = tigeX_A_canvas + (y_desired_canvas * scale);
+            const desiredBallonCanvasY = y_chariot_A_canvas + (y_chariot_B_canvas - y_chariot_A_canvas) * y_desired_canvas / longueur_barre;
+
+            ctx.fillStyle = 'blue'; // Couleur du marqueur
+            ctx.beginPath();
+            const markerSize = ballonRadius * 0.7; // Taille du marqueur
+
+            // Dessine un petit triangle au-dessus de la barre
+            ctx.moveTo(desiredBallonCanvasX - markerSize, desiredBallonCanvasY - ballonRadius - 5);
+            ctx.lineTo(desiredBallonCanvasX + markerSize, desiredBallonCanvasY - ballonRadius - 5);
+            ctx.lineTo(desiredBallonCanvasX, desiredBallonCanvasY - ballonRadius - 5 - markerSize);
+            ctx.closePath();
+            ctx.fill();
+
+            // Dessine le ballon
             ctx.fillStyle = 'red';
             ctx.beginPath();
             const ballonCanvasX = tigeX_A_canvas + (ballonPosition * scale);
