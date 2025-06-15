@@ -1,132 +1,268 @@
+/* Général */
 body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
+    font-family: Arial, sans-serif;
     background-color: #1a1a1a;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #00FF00;
-    overflow: hidden;
-    /* Empêche le scroll si le contenu dépasse */
+    color: #00ff00;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh; /* Permet au body de s'étendre au-delà de la hauteur du viewport si le contenu est plus grand */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto; /* IMPORTANT : Permet le défilement vertical si nécessaire */
+    /* Assurez-vous qu'il n'y a pas de 'overflow: hidden;' sur <html> ou <body> */
+}#app-container {
+    display: flex;
+    flex-direction: column;
+    /* Par défaut, pour les petits écrans */
+    gap: 20px;
+    /* Espace vertical entre les enfants de app-container */
+    padding: 20px;
+    max-width: 1200px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#right-panel {
+    display: flex;
+    flex-direction: column;
+    /* Par défaut, empile ses enfants verticalement */
+    gap: 20px;
+    /* Espace entre infoPanel, alertsContainer et controls */
+    width: 100%;
+    /* Prend toute la largeur disponible dans app-container */
+    max-width: 400px;
+    /* Optionnel: limiter la largeur du panneau de droite si vous voulez */
+    box-sizing: border-box;
 }
 
 #simulatorContainer {
-    display: flex;
-    flex-direction: column;
-    /* Pour empiler les infos et le canvas */
-    background-color: #000;
-    border: 2px solid #00FF00;
-    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-    padding: 10px;
-    border-radius: 8px;
-    resize: both;
-    /* Permet de redimensionner le conteneur manuellement */
-    overflow: hidden;
-    /* Cache le débordement quand on resize */
-    min-width: 400px;
-    /* Taille minimale pour ne pas tout casser */
-    min-height: 400px;
-    max-width: 90vw;
-    /* Utilise 90% de la largeur de la vue */
-    max-height: 90vh;
-    /* Utilise 90% de la hauteur de la vue */
-    width: 800px;
-    /* Taille initiale raisonnable */
-    height: 600px;
     position: relative;
-    /* Pour positionner les alertes absolument */
+    width: 100%;
+    /* Prend toute la largeur disponible */
+    padding-top: 75%;
+    /* Ratio 4:3 (height / width = 600 / 800 = 0.75) pour maintenir la proportion */
+    max-width: 800px;
+    /* Limite la largeur maximale du conteneur du canvas */
+    background-color: #0d0d0d;
+    border: 2px solid #00ff00;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+    margin: 0 auto;
+    /* Centrer le conteneur du simulateur */
+    box-sizing: border-box;
 }
 
-
-canvas {
-    display: block;
-    /* Supprime l'espace sous le canvas */
+#radarCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    /* Le canvas remplit la largeur de son conteneur */
     height: 100%;
-    /* Le canvas remplit la hauteur de son conteneur */
-    background-color: #000;
-    cursor: crosshair;
-    /* Curseur par défaut pour le dessin de polygone */
+    display: block;
+    /* S'assurer qu'il n'y a pas d'espace blanc sous le canvas */
 }
 
 #infoPanel {
-    background-color: rgba(0, 0, 0, 0.7);
-    padding: 5px 10px;
-    border-bottom: 1px solid #006600;
-    margin-bottom: 5px;
-    /* Espace entre le panneau d'info et le canvas */
-    font-size: 0.8em;
+    background-color: #0d0d0d;
+    border: 1px solid #00ff00;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    margin-top: 0px;
+    /* Espace entre le simulateur et le panneau d'info */
+    width: 100%;
+    /* Prend toute la largeur disponible dans app-container */
+    max-width: 800px;
+    /* Alignée avec le simulateur */
+    box-sizing: border-box;
+    /* Inclure padding dans la largeur */
 }
 
-.info-item {
-    margin-right: 15px;
-    display: inline-block;
+#infoPanel h2 {
+    color: #00ff00;
+    margin-top: 0;
+    border-bottom: 1px solid #00aa00;
+    padding-bottom: 5px;
+}
+
+#infoPanel p {
+    margin: 8px 0;
 }
 
 #alertsContainer {
-    position: absolute;
-    /* Positionné par rapport au conteneur principal */
-    top: 10px;
-    right: 10px;
-    width: 250px;
-    z-index: 100;
-    pointer-events: none;
-    /* Permet de cliquer à travers les alertes */
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #0d0d0d;
+    border: 1px solid #ff0000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+    max-height: 150px;
+    /* Limite la hauteur du conteneur d'alertes */
+    overflow-y: auto;
+    /* Permet le défilement interne pour les alertes */
+    width: 100%;
+    /* Prend toute la largeur disponible */
+    max-width: 800px;
+    /* Alignée avec le simulateur */
+    box-sizing: border-box;
 }
 
 .alert {
-    background-color: rgba(255, 0, 0, 0.7);
-    border: 1px solid #FF0000;
-    padding: 8px;
+    background-color: rgba(255, 0, 0, 0.2);
+    color: #ff0000;
+    padding: 5px;
     margin-bottom: 5px;
-    border-radius: 4px;
-    color: #FFFFFF;
-    font-size: 0.9em;
-    animation: fadeInOut 5s forwards;
-    /* Animation de fondu */
-    pointer-events: auto;
-    /* Permet de cliquer sur l'alerte elle-même si nécessaire */
-}
-
-@keyframes fadeInOut {
-    0% {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    10% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    90% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateY(10px);
-    }
+    border: 1px solid #ff0000;
+    border-radius: 3px;
+    font-weight: bold;
 }
 
 #controls {
-    margin-top: 10px;
-    text-align: center;
+    margin-top: 20px;
+    /* Espace au-dessus des boutons */
+    display: flex;
+    flex-wrap: wrap;
+    /* Les boutons peuvent passer à la ligne suivante sur petit écran */
+    gap: 10px;
+    /* Espace entre les boutons */
+    justify-content: center;
+    /* Centrer les boutons */
+    width: 100%;
+    max-width: 800px;
+    /* Alignée avec le reste */
+    box-sizing: border-box;
 }
 
 #controls button {
-    background-color: #004400;
-    color: #00FF00;
-    border: 1px solid #006600;
-    padding: 8px 15px;
+    background-color: #006600;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    padding: 10px 15px;
     border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    font-size: 1em;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    flex-grow: 1;
+    /* Permet aux boutons de grandir pour remplir l'espace */
+    min-width: 150px;
+    /* Largeur minimale pour les boutons */
 }
 
 #controls button:hover {
-    background-color: #006600;
+    background-color: #00ff00;
+    color: #0d0d0d;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
+}
+
+/* Media Query pour les grands écrans (tablettes, ordinateurs) */
+@media (min-width: 900px) {
+
+    /* Ajustez 900px selon la largeur où vous voulez changer le layout */
+    #app-container {
+        flex-direction: row;
+        /* Les enfants (radar et right-panel) se placent côte à côte */
+        justify-content: center;
+        /* Centre le contenu horizontalement */
+        align-items: flex-start;
+        /* Aligne le haut des deux colonnes */
+        gap: 30px;
+        /* Espace horizontal entre le radar et le panneau de droite */
+        max-width: 1600px;
+        /* Peut-être augmenter la largeur maximale pour deux colonnes */
+    }
+
+    #simulatorContainer {
+        /* Pas de padding-top supplémentaire ici si max-width est déjà appliqué */
+        width: 100%;
+        /* Important: permet de grandir dans la colonne */
+        max-width: 800px;
+        /* Conserve la largeur max pour le radar */
+    }
+
+    #right-panel {
+        width: auto;
+        /* Permet au panneau de droite de prendre la largeur de son contenu ou max-width */
+        flex-shrink: 0;
+        /* Empêche le panneau de droite de rétrécir au-delà de son contenu si l'espace est limité */
+        max-width: 350px;
+        /* Définir une largeur maximale pour le panneau de droite sur grand écran */
+        /* Vous pourriez ajuster le gap ici si vous voulez un espacement différent verticalement */
+    }
+
+    #infoPanel,
+    #alertsContainer,
+    #controls {
+        width: 100%;
+        /* S'assure qu'ils remplissent la largeur de #right-panel */
+        max-width: none;
+        /* Annule la max-width précédente si elle est trop restrictive ici */
+    }
+}
+
+/* Media Queries pour ajustements sur très petits écrans si nécessaire */
+@media (max-width: 600px) {
+    #app-container {
+        padding: 10px;
+        /* Moins de padding sur les très petits écrans */
+    }
+
+    #infoPanel,
+    #alertsContainer,
+    #controls {
+        padding: 10px;
+        /* Ajuster le padding interne */
+    }
+
+    #controls button {
+        font-size: 0.9em;
+        /* Texte des boutons légèrement plus petit */
+        padding: 8px 12px;
+    }
+}
+
+/* NEW MEDIA QUERY: Ajustements pour les écrans à très faible hauteur (ex: téléphones en mode paysage) */
+@media (max-height: 450px) {
+
+    /* La valeur 450px est un exemple, ajustez-la si besoin */
+    #simulatorContainer {
+        /* Réduire le ratio hauteur/largeur du conteneur du radar */
+        padding-top: 50%;
+        /* Réduit de 75% à 50% de la largeur, rendant le radar plus compact */
+        /* Optionnel: définir une hauteur maximale fixe si 50% est encore trop haut */
+        /* max-height: 300px; */
+    }
+
+    #app-container {
+        gap: 10px;
+        /* Réduire l'espacement entre les sections pour gagner de la place verticale */
+    }
+
+    #infoPanel,
+    #alertsContainer,
+    #controls {
+        margin-top: 10px;
+        /* Réduire les marges supérieures si elles sont définies pour gagner de la place */
+        padding: 8px;
+        /* Réduire légèrement le padding interne pour gagner de l'espace */
+    }
+
+    #controls button {
+        font-size: 0.8em;
+        /* Rendre le texte des boutons légèrement plus petit */
+        padding: 6px 10px;
+        /* Réduire le padding des boutons */
+        min-width: unset;
+        /* Assurez-vous que cela est déjà fait pour max-width: 400px, sinon répétez */
+    }
+}
+
+@media (max-width: 400px) {
+
+    /* Pour les écrans inférieurs à 400px de large */
+    #controls button {
+        min-width: unset;
+        /* Supprime la contrainte de min-width */
+        /* Ou */
+        /* min-width: 100px; */
+        /* Une valeur plus petite */
+    }
 }

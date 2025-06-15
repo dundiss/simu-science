@@ -9,20 +9,29 @@
 </head>
 
 <body>
-    <div id="simulatorContainer">
-        <div id="infoPanel">
-            <span class="info-item">ID: <span id="aircraftId">N/A</span></span>
-            <span class="info-item">Vitesse: <span id="aircraftSpeed">N/A</span></span>
-            <span class="info-item">Cap: <span id="aircraftHeading">N/A</span></span>
-            <span class="info-item">Altitude: <span id="aircraftAltitude">N/A</span></span>
+    <div id="app-container">
+        <div id="simulatorContainer">
+            <canvas id="radarCanvas"></canvas>
         </div>
-        <canvas id="radarCanvas"></canvas>
-        <div id="controls">
-            <button id="resetPolygonBtn">Réinitialiser Polygone (ou touche 'R')</button>
-            <button id="newPolygonBtn">Nouveau Polygone</button> </div>
+    
+        <div id="right-panel">
+            <div id="infoPanel">
+                <h2>Informations Avion</h2>
+                <p>ID: <span id="aircraftId">N/A</span></p>
+                <p>Vitesse: <span id="aircraftSpeed">N/A</span></p>
+                <p>Cap: <span id="aircraftHeading">N/A</span></p>
+                <p>Altitude: <span id="aircraftAltitude">N/A</span></p>
+            </div>
+    
+            <div id="alertsContainer">
+                <h2>Alertes</h2>
+            </div>
+    
+            <div id="controls">
+                <button id="resetPolygonBtn">Réinitialiser Polygone (R)</button>
+                <button id="newPolygonBtn">Nouveau Polygone</button>
+            </div>
         </div>
-    </div>
-    <div id="alertsContainer">
     </div>
 
     <script src="script.js"></script>
