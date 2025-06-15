@@ -34,6 +34,8 @@ body {
     width: 800px;
     /* Taille initiale raisonnable */
     height: 600px;
+    position: relative;
+    /* Pour positionner les alertes absolument */
 }
 
 
@@ -45,6 +47,8 @@ canvas {
     height: 100%;
     /* Le canvas remplit la hauteur de son conteneur */
     background-color: #000;
+    cursor: crosshair;
+    /* Curseur par défaut pour le dessin de polygone */
 }
 
 #infoPanel {
@@ -68,6 +72,8 @@ canvas {
     right: 10px;
     width: 250px;
     z-index: 100;
+    pointer-events: none;
+    /* Permet de cliquer à travers les alertes */
 }
 
 .alert {
@@ -80,6 +86,8 @@ canvas {
     font-size: 0.9em;
     animation: fadeInOut 5s forwards;
     /* Animation de fondu */
+    pointer-events: auto;
+    /* Permet de cliquer sur l'alerte elle-même si nécessaire */
 }
 
 @keyframes fadeInOut {
