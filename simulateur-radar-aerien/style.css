@@ -145,6 +145,7 @@ body {
     /* Permet aux boutons de grandir pour remplir l'espace */
     min-width: 150px;
     /* Largeur minimale pour les boutons */
+    margin-top: 5px;
 }
 
 #controls button:hover {
@@ -218,6 +219,14 @@ body {
 /* Classe pour masquer l'élément */
 .hidden {
     display: none;
+}
+
+.active-mode {
+    background-color: #00ff00;
+    /* Vert vif pour le mode actif */
+    color: #0d0d0d;
+    border: 1px solid #00ff00;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
 }
 
 /* --- Media Queries (assurez-vous que la description est aussi réactive) --- */
