@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulateur Radar Aérien 2D</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <h1>Simulateur Radar Aérien 2D</h1>
@@ -17,6 +19,7 @@
                 <p>ID: <span id="aircraftId">N/A</span></p>
                 <p>Vitesse: <span id="aircraftSpeed">N/A</span></p>
                 <p>Cap: <span id="aircraftHeading">N/A</span></p>
+                <p>Altitude: <span id="aircraftAltitude">N/A</span></p>
                 <p class="controls-text">
                     **Contrôles :**<br>
                     - Clic pour ajouter un point au polygone.<br>
@@ -27,11 +30,12 @@
         </div>
 
         <div id="alertsContainer" class="alerts-container">
-            </div>
+        </div>
 
         <button id="resetPolygonBtn">Réinitialiser Polygone</button>
     </div>
 
     <script src="script.js"></script>
 </body>
+
 </html>

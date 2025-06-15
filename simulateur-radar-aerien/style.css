@@ -1,141 +1,124 @@
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    /* Alignement en haut */
+    align-items: center;
     min-height: 100vh;
-    background-color: #1a1a2e;
-    /* Fond sombre */
-    color: #e0e0e0;
-    margin: 20px;
-    overflow-x: hidden;
-    /* Empêche le débordement horizontal */
+    margin: 0;
+    background-color: #1a1a1a;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #00FF00;
+    overflow: hidden;
+    /* Empêche le scroll si le contenu dépasse */
 }
 
-.container {
-    background-color: #0f0f1b;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-    /* Ombre lumineuse verte */
-    text-align: center;
-    max-width: 1200px;
-    width: 100%;
-}
-
-h1 {
-    color: #00ff00;
-    /* Vert vif */
-    margin-bottom: 20px;
-    text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
-}
-
-.simulation-area {
+#simulatorContainer {
     display: flex;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 20px;
-    flex-wrap: wrap;
-    /* Pour les petits écrans */
+    flex-direction: column;
+    /* Pour empiler les infos et le canvas */
+    background-color: #000;
+    border: 2px solid #00FF00;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+    resize: both;
+    /* Permet de redimensionner le conteneur manuellement */
+    overflow: hidden;
+    /* Cache le débordement quand on resize */
+    min-width: 400px;
+    /* Taille minimale pour ne pas tout casser */
+    min-height: 400px;
+    max-width: 90vw;
+    /* Utilise 90% de la largeur de la vue */
+    max-height: 90vh;
+    /* Utilise 90% de la hauteur de la vue */
+    width: 800px;
+    /* Taille initiale raisonnable */
+    height: 600px;
 }
+
 
 canvas {
-    background-color: #0a0a0f;
-    /* Noir très foncé pour le radar */
-    border: 2px solid #00ff00;
-    /* Bordure vert radar */
-    border-radius: 50%;
-    /* Rendre le radar rond */
-    box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.5), 0 0 20px rgba(0, 255, 0, 0.4);
-    cursor: crosshair;
-    /* Curseur radar */
+    display: block;
+    /* Supprime l'espace sous le canvas */
+    width: 100%;
+    /* Le canvas remplit la largeur de son conteneur */
+    height: 100%;
+    /* Le canvas remplit la hauteur de son conteneur */
+    background-color: #000;
 }
 
-.info-panel {
-    background-color: #1a1a2e;
-    border: 1px solid #00ff00;
-    padding: 15px 20px;
-    border-radius: 8px;
-    text-align: left;
-    min-width: 250px;
-    max-height: 250px;
-    /* Limiter la hauteur pour éviter d'être trop grand */
+#infoPanel {
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 5px 10px;
+    border-bottom: 1px solid #006600;
+    margin-bottom: 5px;
+    /* Espace entre le panneau d'info et le canvas */
+    font-size: 0.8em;
 }
 
-.info-panel h2 {
-    color: #00ff00;
-    margin-top: 0;
-    border-bottom: 1px solid #00ff00;
-    padding-bottom: 5px;
-    margin-bottom: 10px;
+.info-item {
+    margin-right: 15px;
+    display: inline-block;
 }
 
-.info-panel p {
-    margin: 5px 0;
-    font-size: 1.1em;
-}
-
-.info-panel span {
-    font-weight: bold;
-    color: #33ff33;
-    /* Vert légèrement plus clair */
-}
-
-.controls-text {
-    font-size: 0.9em;
-    color: #99ff99;
-    margin-top: 20px;
-    line-height: 1.5;
-}
-
-.alerts-container {
-    margin-top: 30px;
-    min-height: 50px;
-    /* Pour réserver de l'espace */
+#alertsContainer {
+    position: absolute;
+    /* Positionné par rapport au conteneur principal */
+    top: 10px;
+    right: 10px;
+    width: 250px;
+    z-index: 100;
 }
 
 .alert {
-    background-color: #ff0000;
-    /* Rouge vif pour les alertes */
-    color: white;
-    padding: 10px 15px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    font-weight: bold;
-    animation: pulse 1s infinite alternate;
-    /* Animation de clignotement */
-    display: inline-block;
-    /* Pour que le padding fonctionne bien avec l'animation */
+    background-color: rgba(255, 0, 0, 0.7);
+    border: 1px solid #FF0000;
+    padding: 8px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    color: #FFFFFF;
+    font-size: 0.9em;
+    animation: fadeInOut 5s forwards;
+    /* Animation de fondu */
 }
 
-@keyframes pulse {
-    from {
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    10% {
         opacity: 1;
-        transform: scale(1);
+        transform: translateY(0);
     }
 
-    to {
-        opacity: 0.7;
-        transform: scale(1.02);
+    90% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(10px);
     }
 }
 
-button {
-    background-color: #008000;
-    /* Vert foncé */
-    color: white;
-    padding: 10px 20px;
-    border: none;
+#controls {
+    margin-top: 10px;
+    text-align: center;
+}
+
+#controls button {
+    background-color: #004400;
+    color: #00FF00;
+    border: 1px solid #006600;
+    padding: 8px 15px;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 1em;
-    margin-top: 20px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: background-color 0.2s;
 }
 
-button:hover {
-    background-color: #00b300;
-    /* Vert plus clair au survol */
-    transform: translateY(-2px);
+#controls button:hover {
+    background-color: #006600;
 }

@@ -1,40 +1,61 @@
 // --- Initialisation du Canvas et Contexte ---
 const canvas = document.getElementById('radarCanvas');
 const ctx = canvas.getContext('2d');
-const centerX = canvas.width / 2;
-const centerY = canvas.height / 2;
-const radarRadius = Math.min(centerX, centerY) - 20; // Rayon max du radar
+
+// Variables pour le centre du radar, qui peut maintenant se déplacer
+let radarCenterX = canvas.width / 2;
+let radarCenterY = canvas.height / 2;
+const radarRadius = Math.min(canvas.width / 2, canvas.height / 2) - 20; // Rayon max du radar basé sur la taille du canvas
 
 // --- Éléments d'information et d'alerte ---
 const aircraftIdSpan = document.getElementById('aircraftId');
 const aircraftSpeedSpan = document.getElementById('aircraftSpeed');
 const aircraftHeadingSpan = document.getElementById('aircraftHeading');
+const aircraftAltitudeSpan = document.getElementById('aircraftAltitude'); // Ajouté pour l'altitude
 const alertsContainer = document.getElementById('alertsContainer');
 const resetPolygonBtn = document.getElementById('resetPolygonBtn');
 
 // --- Paramètres de Simulation ---
-const NUM_AIRCRAFT = 8; // Nombre d'avions simulés
-const AIRCRAFT_SIZE = 8; // Taille des blips (pixels)
-const AIRCRAFT_SPEED_MIN = 0.5; // px/frame
-const AIRCRAFT_SPEED_MAX = 2.0; // px/frame
+const NUM_AIRCRAFT = 12; // Augmenté pour un peu plus de trafic
+const AIRCRAFT_BASE_SIZE = 8; // Renommé pour l'échelle d'altitude
+const AIRCRAFT_SPEED_MIN_PX_PER_FRAME = 0.5; // px/frame
+const AIRCRAFT_SPEED_MAX_PX_PER_FRAME = 2.0; // px/frame
+const AIRCRAFT_ALTITUDE_MIN = 1000; // Altitude minimale en pieds
+const AIRCRAFT_ALTITUDE_MAX = 40000; // Altitude maximale en pieds
+const AIRCRAFT_ALTITUDE_CHANGE_RATE_FT_PER_FRAME = 20; // Taux de changement d'altitude
 const RADAR_SWEEP_SPEED = 0.03; // Vitesse de la ligne de balayage du radar (radians/frame)
 const MAX_ALERTS = 3; // Nombre max d'alertes affichées
+
+// Paramètres de mouvement pour éviter l'agglomération
+const RANDOM_HEADING_CHANGE_MAGNITUDE = 0.05; // Amplitude plus grande des déviations aléatoires
+const RANDOM_HEADING_CHANGE_CHANCE = 0.05; // Plus de chance de dévier
+const CENTRAL_ZONE_RADIUS_RATIO = 0.2; // Ratio du rayon du radar pour définir la zone centrale de répulsion
 
 let aircrafts = [];
 let polygonPoints = [];
 let radarSweepAngle = 0; // Angle du balayage radar
 let animationFrameId; // Pour gérer la boucle d'animation
 
+// Variables pour le déplacement du radar par l'utilisateur
+let isDraggingRadar = false;
+let dragStartX, dragStartY;
+let initialRadarCenterX, initialRadarCenterY; // Pour stocker la position du radar au début du drag
+
 // --- Classe Aircraft (Avion) ---
 class Aircraft {
-    constructor(id, x, y, speed, heading) {
+    constructor(id, x, y, speed, heading, altitude) { // Ajout de l'altitude
         this.id = id;
         this.x = x;
         this.y = y;
         this.speed = speed; // Vitesse en pixels par frame
-        this.heading = heading; // Cap en radians (0 = droite, PI/2 = bas, PI = gauche, 3PI/2 = haut)
+        this.heading = heading; // Cap en radians
         this.color = `hsl(${Math.random() * 360}, 100%, 70%)`; // Couleur aléatoire pour chaque avion
-        this.isVisible = true; // Pour la logique d'apparition/disparition
+        this.isVisible = true; // Toujours visible dans cette version
+
+        // Ajout de l'altitude
+        this.altitude = altitude;
+        // Vitesse verticale aléatoire (montée ou descente)
+        this.verticalSpeed = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * AIRCRAFT_ALTITUDE_CHANGE_RATE_FT_PER_FRAME);
     }
 
     update() {
@@ -42,37 +63,102 @@ class Aircraft {
         this.x += this.speed * Math.cos(this.heading);
         this.y += this.speed * Math.sin(this.heading);
 
-        // Rebondir sur les bords du canvas
-        if (this.x < 0 || this.x > canvas.width) {
-            this.heading = Math.PI - this.heading; // Inverser la direction horizontale
-            this.x = Math.max(0, Math.min(canvas.width, this.x)); // Assurer qu'il reste dans les limites
-        }
-        if (this.y < 0 || this.y > canvas.height) {
-            this.heading = -this.heading; // Inverser la direction verticale
-            this.y = Math.max(0, Math.min(canvas.height, this.y)); // Assurer qu'il reste dans les limites
+        // Mettre à jour l'altitude
+        this.altitude += this.verticalSpeed;
+        // Inverser la direction verticale si les limites sont atteintes
+        if (this.altitude < AIRCRAFT_ALTITUDE_MIN) {
+            this.altitude = AIRCRAFT_ALTITUDE_MIN;
+            this.verticalSpeed = Math.abs(this.verticalSpeed); // Remonter
+        } else if (this.altitude > AIRCRAFT_ALTITUDE_MAX) {
+            this.altitude = AIRCRAFT_ALTITUDE_MAX;
+            this.verticalSpeed = -Math.abs(this.verticalSpeed); // Descendre
         }
 
-        // Ajouter une légère variation aléatoire au cap pour simuler des mouvements moins rectilignes
-        this.heading += (Math.random() - 0.5) * 0.02; // Petite déviation aléatoire
+        // --- Logique de rebond sur les bords du canvas ---
+        // et déviation pour éviter l'agglomération
+
+        let changedHeading = false;
+
+        // Rebond horizontal et déviation
+        if (this.x < 0) {
+            this.x = 0;
+            this.heading = Math.PI - this.heading;
+            changedHeading = true;
+        } else if (this.x > canvas.width) {
+            this.x = canvas.width;
+            this.heading = Math.PI - this.heading;
+            changedHeading = true;
+        }
+
+        // Rebond vertical et déviation
+        if (this.y < 0) {
+            this.y = 0;
+            this.heading = -this.heading;
+            changedHeading = true;
+        } else if (this.y > canvas.height) {
+            this.y = canvas.height;
+            this.heading = -this.heading;
+            changedHeading = true;
+        }
+
+        // Normaliser le cap pour qu'il reste dans [0, 2*PI]
+        this.heading = (this.heading + Math.PI * 2) % (Math.PI * 2);
+
+        // --- Logique de répulsion depuis le centre (pour éviter l'agglomération) ---
+        // Calculer la distance de l'avion au centre du radar actuel
+        const distFromRadarCenter = Math.sqrt(
+            Math.pow(this.x - radarCenterX, 2) + Math.pow(this.y - radarCenterY, 2)
+        );
+        const centralZoneRadius = radarRadius * CENTRAL_ZONE_RADIUS_RATIO;
+
+        // Si l'avion est dans la zone centrale de répulsion
+        if (distFromRadarCenter < centralZoneRadius) {
+            // Calculer l'angle vers le centre
+            const angleToCenter = Math.atan2(radarCenterY - this.y, radarCenterX - this.x);
+            // Définir un cap qui le pousse hors du centre avec une variation aléatoire
+            this.heading = angleToCenter + Math.PI + (Math.random() - 0.5) * Math.PI / 2; // Pousse vers l'extérieur
+            changedHeading = true;
+        }
+
+        // Ajouter une déviation aléatoire si le cap n'a pas été changé par un rebond ou la répulsion centrale
+        if (!changedHeading && Math.random() < RANDOM_HEADING_CHANGE_CHANCE) {
+            this.heading += (Math.random() - 0.5) * RANDOM_HEADING_CHANGE_MAGNITUDE;
+        }
     }
 
     draw() {
-        if (!this.isVisible) return;
+        // La taille et la transparence dépendent de l'altitude
+        const altitudeRatio = (this.altitude - AIRCRAFT_ALTITUDE_MIN) / (AIRCRAFT_ALTITUDE_MAX - AIRCRAFT_ALTITUDE_MIN);
+        const currentSize = AIRCRAFT_BASE_SIZE * (1 - 0.5 * altitudeRatio); // Plus petit en altitude
+        const currentAlpha = 1 - 0.4 * altitudeRatio; // Moins visible en altitude
 
         ctx.beginPath();
-        ctx.arc(this.x, this.y, AIRCRAFT_SIZE / 2, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = this.color;
+        ctx.arc(this.x, this.y, currentSize / 2, 0, Math.PI * 2);
+        
+        // Utiliser hsla pour la transparence
+        const colorParts = this.color.match(/\d+/g); // Extrait les nombres de la chaîne hsl()
+        ctx.fillStyle = `hsla(${colorParts[0]}, ${colorParts[1]}%, ${colorParts[2]}%, ${currentAlpha})`;
+        
+        ctx.shadowBlur = 10 * currentAlpha; // Ombre dépend de la transparence
+        ctx.shadowColor = `hsla(${colorParts[0]}, ${colorParts[1]}%, ${colorParts[2]}%, ${currentAlpha * 0.8})`;
         ctx.fill();
-        ctx.shadowBlur = 0; // Réinitialiser l'ombre pour ne pas affecter le reste du dessin
+        ctx.shadowBlur = 0; // Réinitialiser l'ombre
+
+        // Indiquer la montée/descente si la vitesse verticale est significative
+        ctx.fillStyle = '#FFFFFF'; // Couleur du texte
+        ctx.font = '7px Arial';
+        if (this.verticalSpeed > AIRCRAFT_ALTITUDE_CHANGE_RATE_FT_PER_FRAME / 5) {
+            ctx.fillText('▲', this.x + currentSize / 2 + 2, this.y + currentSize / 2 + 2);
+        } else if (this.verticalSpeed < -AIRCRAFT_ALTITUDE_CHANGE_RATE_FT_PER_FRAME / 5) {
+            ctx.fillText('▼', this.x + currentSize / 2 + 2, this.y + currentSize / 2 + 2);
+        }
     }
 
     // Calculer la vitesse en "noeuds" pour l'affichage (arbitraire)
     get displaySpeed() {
         // On peut définir une conversion arbitraire de px/frame en noeuds
         // Par exemple, 1 px/frame = 10 noeuds
-        return (this.speed * 10).toFixed(1) + ' kts';
+        return (this.speed * 10).toFixed(0) + ' kts';
     }
 
     // Calculer le cap en degrés
@@ -81,13 +167,18 @@ class Aircraft {
         if (degrees < 0) degrees += 360; // Assurer un angle positif
         return degrees.toFixed(0) + '°';
     }
+
+    // Afficher l'altitude
+    get displayAltitude() {
+        return `${Math.round(this.altitude)} ft`;
+    }
 }
 
 // --- Fonctions de Dessin Radar ---
 
 function drawRadarBackground() {
     // Fond du radar (dégradé pour l'effet)
-    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radarRadius);
+    const gradient = ctx.createRadialGradient(radarCenterX, radarCenterY, 0, radarCenterX, radarCenterY, radarRadius);
     gradient.addColorStop(0, 'rgba(0, 255, 0, 0.05)');
     gradient.addColorStop(0.5, 'rgba(0, 255, 0, 0.1)');
     gradient.addColorStop(1, 'rgba(0, 255, 0, 0.2)');
@@ -96,7 +187,7 @@ function drawRadarBackground() {
 
     // Cercle extérieur
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radarRadius, 0, Math.PI * 2);
+    ctx.arc(radarCenterX, radarCenterY, radarRadius, 0, Math.PI * 2);
     ctx.strokeStyle = '#006600'; // Vert foncé pour la bordure
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -106,7 +197,7 @@ function drawRadarBackground() {
     ctx.lineWidth = 1;
     for (let i = 1; i <= 4; i++) {
         ctx.beginPath();
-        ctx.arc(centerX, centerY, radarRadius * (i / 4), 0, Math.PI * 2);
+        ctx.arc(radarCenterX, radarCenterY, radarRadius * (i / 4), 0, Math.PI * 2);
         ctx.stroke();
     }
 
@@ -115,20 +206,20 @@ function drawRadarBackground() {
     for (let i = 0; i < 12; i++) {
         const angle = (Math.PI / 6) * i;
         ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.lineTo(centerX + radarRadius * Math.cos(angle), centerY + radarRadius * Math.sin(angle));
+        ctx.moveTo(radarCenterX, radarCenterY);
+        ctx.lineTo(radarCenterX + radarRadius * Math.cos(angle), radarCenterY + radarRadius * Math.sin(angle));
         ctx.stroke();
     }
 }
 
 function drawRadarSweep() {
     ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    const endX = centerX + radarRadius * Math.cos(radarSweepAngle);
-    const endY = centerY + radarRadius * Math.sin(radarSweepAngle);
+    ctx.moveTo(radarCenterX, radarCenterY);
+    const endX = radarCenterX + radarRadius * Math.cos(radarSweepAngle);
+    const endY = radarCenterY + radarRadius * Math.sin(radarSweepAngle);
 
     // Créer un dégradé pour la ligne de balayage
-    const sweepGradient = ctx.createLinearGradient(centerX, centerY, endX, endY);
+    const sweepGradient = ctx.createLinearGradient(radarCenterX, radarCenterY, endX, endY);
     sweepGradient.addColorStop(0, 'rgba(0, 255, 0, 0)');
     sweepGradient.addColorStop(0.5, 'rgba(0, 255, 0, 0.7)');
     sweepGradient.addColorStop(1, 'rgba(0, 255, 0, 1)');
@@ -171,10 +262,7 @@ function drawPolygon() {
 }
 
 // Algorithme Point-in-Polygon (Ray Casting Algorithm)
-// Source: https://stackoverflow.com/questions/22521982/check-if-point-is-inside-a-polygon-in-javascript
 function isPointInPolygon(point, polygon) {
-    // point = {x, y}
-    // polygon = [{x, y}, {x, y}, ...]
     let x = point.x, y = point.y;
     let inside = false;
     for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
@@ -232,9 +320,10 @@ function initAircrafts() {
     for (let i = 0; i < NUM_AIRCRAFT; i++) {
         const x = Math.random() * canvas.width;
         const y = Math.random() * canvas.height;
-        const speed = AIRCRAFT_SPEED_MIN + Math.random() * (AIRCRAFT_SPEED_MAX - AIRCRAFT_SPEED_MIN);
+        const speed = AIRCRAFT_SPEED_MIN_PX_PER_FRAME + Math.random() * (AIRCRAFT_SPEED_MAX_PX_PER_FRAME - AIRCRAFT_SPEED_MIN_PX_PER_FRAME);
         const heading = Math.random() * Math.PI * 2; // Angle aléatoire en radians
-        aircrafts.push(new Aircraft(`AC-${i + 1}`, x, y, speed, heading));
+        const altitude = AIRCRAFT_ALTITUDE_MIN + Math.random() * (AIRCRAFT_ALTITUDE_MAX - AIRCRAFT_ALTITUDE_MIN); // Initialiser l'altitude
+        aircrafts.push(new Aircraft(`AC-${i + 1}`, x, y, speed, heading, altitude));
     }
 }
 
@@ -242,11 +331,18 @@ function initAircrafts() {
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Effacer le canvas
 
-    drawRadarBackground();
-    drawPolygon(); // Dessiner le polygone avant les avions
+    // Appliquer la transformation pour le déplacement du radar AVANT de dessiner le fond
+    // Le fond du radar et le balayage doivent être dessinés en fonction de radarCenterX/Y
+    // Les avions et le polygone doivent être dessinés dans le système de coordonnées du canvas
+    // La façon la plus simple est d'utiliser `ctx.translate` pour les avions et le polygone.
 
-    let aircraftInPolygon = false; // Pour la gestion des alertes globales
-    let displayedAircraft = null; // Pour afficher les infos du premier avion trouvé dans le polygone ou au centre
+    drawRadarBackground(); // Dessine le fond du radar à sa position actuelle
+
+    // Appliquer le décalage pour dessiner les avions et le polygone par rapport au centre du radar
+    // Ce n'est plus nécessaire de faire un translate global, car le radar bouge.
+    // Les avions et polygones doivent juste utiliser leurs coordonnées absolues du canvas.
+
+    let displayedAircraft = null; // Pour afficher les infos de l'avion sélectionné
 
     // Mettre à jour et dessiner les avions
     aircrafts.forEach(aircraft => {
@@ -256,7 +352,6 @@ function animate() {
         // Vérifier l'intrusion dans le polygone
         if (polygonPoints.length > 2 && isPointInPolygon({ x: aircraft.x, y: aircraft.y }, polygonPoints)) {
             addAlert(aircraft.id);
-            aircraftInPolygon = true; // Un avion est dans le polygone
             // Si c'est le premier avion dans le polygone, afficher ses infos
             if (!displayedAircraft) {
                 displayedAircraft = aircraft;
@@ -265,26 +360,30 @@ function animate() {
             removeAlert(aircraft.id); // L'avion est sorti, retirer l'alerte
         }
 
-        // Si aucun avion n'est dans le polygone, afficher l'avion le plus proche du centre (simplement pour avoir une info par défaut)
+        // Si aucun avion n'est dans le polygone, afficher l'avion le plus proche du centre du RADAR ACTUEL
         if (!displayedAircraft) {
-             const dist = Math.sqrt(Math.pow(aircraft.x - centerX, 2) + Math.pow(aircraft.y - centerY, 2));
-             if (dist < radarRadius / 4) { // Si l'avion est proche du centre du radar
-                 if (!displayedAircraft || dist < Math.sqrt(Math.pow(displayedAircraft.x - centerX, 2) + Math.pow(displayedAircraft.y - centerY, 2))) {
+             const dist = Math.sqrt(Math.pow(aircraft.x - radarCenterX, 2) + Math.pow(aircraft.y - radarCenterY, 2));
+             if (dist < radarRadius) { // Si l'avion est dans la portée du radar
+                 if (!displayedAircraft || dist < Math.sqrt(Math.pow(displayedAircraft.x - radarCenterX, 2) + Math.pow(displayedAircraft.y - radarCenterY, 2))) {
                      displayedAircraft = aircraft;
                  }
              }
         }
     });
 
+    drawPolygon(); // Dessine le polygone à ses coordonnées absolues
+
     // Afficher les informations de l'avion
     if (displayedAircraft) {
         aircraftIdSpan.textContent = displayedAircraft.id;
         aircraftSpeedSpan.textContent = displayedAircraft.displaySpeed;
         aircraftHeadingSpan.textContent = displayedAircraft.displayHeading;
+        aircraftAltitudeSpan.textContent = displayedAircraft.displayAltitude; // Afficher l'altitude
     } else {
         aircraftIdSpan.textContent = 'N/A';
         aircraftSpeedSpan.textContent = 'N/A';
         aircraftHeadingSpan.textContent = 'N/A';
+        aircraftAltitudeSpan.textContent = 'N/A'; // N/A pour l'altitude aussi
     }
 
     drawRadarSweep(); // Dessiner le balayage radar par-dessus les avions
@@ -296,15 +395,18 @@ function animate() {
 
 // Gérer le clic pour ajouter des points au polygone
 canvas.addEventListener('click', (event) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    polygonPoints.push({ x, y });
+    // Si nous ne sommes PAS en train de draguer le radar, alors c'est un clic pour le polygone
+    if (!isDraggingRadar) {
+        const rect = canvas.getBoundingClientRect();
+        // Les points du polygone sont en coordonnées absolues du canvas
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        polygonPoints.push({ x, y });
+    }
 });
 
 // Gérer le double-clic pour fermer le polygone
 canvas.addEventListener('dblclick', () => {
-    // Un double-clic après au moins 3 points ferme le polygone (dernier point = premier point)
     if (polygonPoints.length >= 3) {
         polygonPoints.push(polygonPoints[0]); // Ferme le polygone visuellement
     }
@@ -314,7 +416,6 @@ canvas.addEventListener('dblclick', () => {
 document.addEventListener('keydown', (event) => {
     if (event.key === 'r' || event.key === 'R') {
         polygonPoints = [];
-        // Effacer toutes les alertes actives
         activeAlerts.forEach(timeoutId => clearTimeout(timeoutId));
         activeAlerts.clear();
         alertsContainer.innerHTML = '';
@@ -327,6 +428,52 @@ resetPolygonBtn.addEventListener('click', () => {
     activeAlerts.forEach(timeoutId => clearTimeout(timeoutId));
     activeAlerts.clear();
     alertsContainer.innerHTML = '';
+});
+
+// --- Gestion du déplacement du radar ---
+// Supprimons l'ancien événement mousedown et recréons-en un plus clair.
+canvas.removeEventListener('mousedown', handleCanvasMousedown); // Assurez-vous que l'ancien est retiré
+canvas.removeEventListener('mousemove', handleCanvasMousemove);
+canvas.removeEventListener('mouseup', handleCanvasMouseup);
+
+function handleCanvasMousedown(event) {
+    // Clic droit ou Maj + clic gauche pour déplacer le radar
+    if (event.button === 2 || event.shiftKey) { 
+        isDraggingRadar = true;
+        dragStartX = event.clientX;
+        dragStartY = event.clientY;
+        initialRadarCenterX = radarCenterX; // Stocke la position initiale du radar
+        initialRadarCenterY = radarCenterY;
+        canvas.style.cursor = 'grabbing';
+        event.preventDefault(); // Empêche le menu contextuel du clic droit
+    }
+    // Le clic gauche pour le polygone est maintenant géré par un eventListener séparé `canvas.addEventListener('click')`
+}
+
+function handleCanvasMousemove(event) {
+    if (isDraggingRadar) {
+        const deltaX = event.clientX - dragStartX;
+        const deltaY = event.clientY - dragStartY;
+        // Met à jour la position du centre du radar
+        radarCenterX = initialRadarCenterX + deltaX;
+        radarCenterY = initialRadarCenterY + deltaY;
+    }
+}
+
+function handleCanvasMouseup() {
+    isDraggingRadar = false;
+    canvas.style.cursor = 'crosshair'; // Revenir au curseur normal
+}
+
+// Attacher les nouveaux gestionnaires d'événements
+canvas.addEventListener('mousedown', handleCanvasMousedown);
+canvas.addEventListener('mousemove', handleCanvasMousemove);
+canvas.addEventListener('mouseup', handleCanvasMouseup);
+
+
+// Empêcher le menu contextuel sur le canvas pour le clic droit
+canvas.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
 });
 
 // --- Démarrage de la Simulation ---
