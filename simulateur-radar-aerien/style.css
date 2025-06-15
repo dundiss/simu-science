@@ -153,6 +153,76 @@ body {
     box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
 }
 
+#description-container {
+    width: 100%;
+    max-width: 800px;
+    /* Aligné avec le simulateur */
+    margin: 20px auto;
+    /* Marge au-dessus et en dessous, centré */
+    padding: 10px 20px;
+    background-color: #0d0d0d;
+    border: 1px solid #00ff00;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    box-sizing: border-box;
+    /* Important pour le padding */
+}
+
+#description-container h2 {
+    color: #00ff00;
+    margin-top: 0;
+    border-bottom: 1px solid #00aa00;
+    padding-bottom: 5px;
+}
+
+#description-container p,
+#description-container ul {
+    color: #a0ffa0;
+    /* Un vert plus doux pour le texte */
+    font-size: 0.95em;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+#description-container ul {
+    padding-left: 20px;
+}
+
+#description-container li {
+    margin-bottom: 5px;
+}
+
+#toggleDescriptionBtn {
+    display: block;
+    /* Pour qu'il prenne toute la largeur disponible */
+    width: fit-content;
+    /* S'adapte à la largeur du texte */
+    margin: 0 auto 15px auto;
+    /* Centre le bouton et ajoute une marge en bas */
+    background-color: #006600;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+#toggleDescriptionBtn:hover {
+    background-color: #00ff00;
+    color: #0d0d0d;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
+}
+
+/* Classe pour masquer l'élément */
+.hidden {
+    display: none;
+}
+
+/* --- Media Queries (assurez-vous que la description est aussi réactive) --- */
+
+
 /* Media Query pour les grands écrans (tablettes, ordinateurs) */
 @media (min-width: 900px) {
 
@@ -216,6 +286,11 @@ body {
         font-size: 0.9em;
         /* Texte des boutons légèrement plus petit */
         padding: 8px 12px;
+    }
+
+    #description-container {
+        padding: 10px;
+        /* Moins de padding sur les très petits écrans */
     }
 }
 

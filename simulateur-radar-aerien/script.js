@@ -16,7 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const aircraftAltitudeSpan = document.getElementById('aircraftAltitude');
     const alertsContainer = document.getElementById('alertsContainer');
     const resetPolygonBtn = document.getElementById('resetPolygonBtn');
-    const newPolygonBtn = document.getElementById('newPolygonBtn'); // NOUVEAU BOUTON
+    const newPolygonBtn = document.getElementById('newPolygonBtn'); 
+    const toggleDescriptionBtn = document.getElementById('toggleDescriptionBtn');
+    const simulatorDescription = document.getElementById('simulatorDescription');
 
     // --- Paramètres de Simulation ---
     const NUM_AIRCRAFT = 12;
@@ -586,6 +588,15 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Nouveau polygone créé. Dessinez les points.");
         } else {
             console.warn("Le polygone actuel doit avoir au moins 3 points ou être vide avant d'en créer un nouveau.");
+        }
+    });
+
+    toggleDescriptionBtn.addEventListener('click', () => {
+        simulatorDescription.classList.toggle('hidden'); // Ajoute ou retire la classe 'hidden'
+        if (simulatorDescription.classList.contains('hidden')) {
+            toggleDescriptionBtn.textContent = 'Afficher la description';
+        } else {
+            toggleDescriptionBtn.textContent = 'Masquer la description';
         }
     });
 

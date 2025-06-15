@@ -4,16 +4,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulateur Radar</title>
+    <title>Radar de Surveillance Aérienne</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+    <h1>Simulateur de Radar de Surveillance Aérienne</h1>
+
+    <div id="description-container">
+        <button id="toggleDescriptionBtn">Afficher la description</button>
+        <div id="simulatorDescription" class="hidden">
+            <h2>Description du Simulateur</h2>
+            <p>Ce simulateur représente un système radar de surveillance aérienne. Il affiche des avions se déplaçant de
+                manière autonome sur un écran radar.</p>
+            <p><strong>Fonctionnalités :</strong></p>
+            <ul>
+                <li>**Détection d'avions :** Les avions sont visualisés et leurs informations (ID, vitesse, cap,
+                    altitude) sont affichées pour l'avion le plus proche du centre du radar.</li>
+                <li>**Déplacement du radar :** Cliquez et maintenez la touche "Shift" ou le bouton droit de la souris
+                    sur le radar pour le déplacer.</li>
+                <li>**Zones de surveillance (Polygones) :**
+                    <ul>
+                        <li>Cliquez sur le radar pour ajouter des points et définir des polygones de surveillance.</li>
+                        <li>Un double-clic finalise le polygone actuel et vous permet d'en dessiner un nouveau.</li>
+                        <li>Le bouton "Nouveau Polygone" fait la même chose.</li>
+                        <li>La touche 'R' ou le bouton "Réinitialiser Polygone" efface tous les polygones.</li>
+                    </ul>
+                </li>
+                <li>**Zones d'Intrusion et de Dissuasion :**
+                    <ul>
+                        <li>**Zone de Dissuasion (Rouge clair) :** Si un avion entre dans cette zone autour d'un
+                            polygone, son cap est subtilement ajusté pour le dissuader d'entrer.</li>
+                        <li>**Zone d'Intrusion (Rouge foncé / Alerte) :** Si un avion pénètre à l'intérieur d'un
+                            polygone, une alerte est déclenchée et l'avion est repoussé plus fortement.</li>
+                    </ul>
+                </li>
+            </ul>
+            <p>L'objectif est de visualiser le comportement des avions face aux zones protégées et de simuler la réponse
+                du système radar.</p>
+        </div>
+    </div>
     <div id="app-container">
         <div id="simulatorContainer">
             <canvas id="radarCanvas"></canvas>
         </div>
-    
+
         <div id="right-panel">
             <div id="infoPanel">
                 <h2>Informations Avion</h2>
@@ -22,11 +57,11 @@
                 <p>Cap: <span id="aircraftHeading">N/A</span></p>
                 <p>Altitude: <span id="aircraftAltitude">N/A</span></p>
             </div>
-    
+
             <div id="alertsContainer">
                 <h2>Alertes</h2>
             </div>
-    
+
             <div id="controls">
                 <button id="resetPolygonBtn">Réinitialiser Polygone (R)</button>
                 <button id="newPolygonBtn">Nouveau Polygone</button>
