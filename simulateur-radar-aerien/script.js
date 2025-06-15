@@ -631,6 +631,72 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.addEventListener('mousemove', handleCanvasMousemove);
     canvas.addEventListener('mouseup', handleCanvasMouseup);
 
+    let startX, startY; // Pour stocker la position initiale du doigt/curseur
+
+    // --- Gestion des événements de la souris (existante) ---
+    canvas.addEventListener('mousedown', (e) => {
+        // Condition originale : e.button === 2 (clic droit) || e.shiftKey (Shift + clic gauche)
+        if (e.button === 2 || e.shiftKey) { // Clic droit ou Shift + clic gauche
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            canvas.style.cursor = 'grabbing';
+            e.preventDefault(); // Empêche le menu contextuel du clic droit
+        }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            radarCenterX += dx;
+            radarCenterY += dy;
+            startX = e.clientX;
+            startY = e.clientY;
+            drawRadar(); // Redessine le radar après déplacement
+        }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+        isDragging = false;
+        canvas.style.cursor = 'grab';
+    });
+
+    // Optionnel: Empêcher le menu contextuel par défaut même sans déplacement actif
+    canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+    });
+
+    // --- NOUVEAU : Gestion des événements tactiles pour le déplacement ---
+
+    canvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) { // S'assurer qu'un seul doigt touche l'écran
+            isDragging = true;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            // Pas de changement de curseur sur mobile
+            e.preventDefault(); // Empêche le défilement de la page ou le zoom par défaut
+        }
+    }, { passive: false }); // { passive: false } est important pour permettre e.preventDefault()
+
+    canvas.addEventListener('touchmove', (e) => {
+        if (isDragging && e.touches.length === 1) {
+            const dx = e.touches[0].clientX - startX;
+            const dy = e.touches[0].clientY - startY;
+            radarCenterX += dx;
+            radarCenterY += dy;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            drawRadar(); // Redessine le radar après déplacement
+            e.preventDefault(); // Empêche le défilement de la page pendant le glisser
+        }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => {
+        isDragging = false;
+    });
+
+
     canvas.addEventListener('contextmenu', (event) => {
         event.preventDefault();
     });
